@@ -1,0 +1,16 @@
+#=============================================================================
+# svdir Aliases
+#=============================================================================
+alias svdir='. ~/bin/svdir % sc '
+alias scdir='. ~/bin/svdir % sc '
+alias lsdirs='. ~/bin/svdir % ls'
+alias rmdirs='. ~/bin/svdir % rm'
+alias sbdirs='. ~/bin/svdir % sb'
+alias lbdirs='. ~/bin/svdir % lb'
+alias lddirs='. ~/bin/svdir % ld'
+alias dbdirs='. ~/bin/svdir % db'
+alias svdir-help='svdir -h'
+alias svdir-aliases='alias | grep svdir | grep -v svdir-aliases'
+
+alias vff='rmdirs -q && lddirs vff &>/dev/null && lsdirs'
+alias xcdr='rmdirs -q && lddirs xcdr &>/dev/null && lsdirs'

@@ -5,6 +5,18 @@
 This is a collections of some of my scripts that I thought might be usable
 by some people other than myself.
 
+## Table of Contents ##
+
+- [Modules](#modules)
+- [Scripts](#scripts)
+  - [ansi.sh](#ansish)
+  - [ascii.py](#asciipy)
+  - [dtach-ctl.sh](#dtach-ctlsh)
+  - [svdir](#svdir)
+  - [sysinfo.pl](#sysinfpl)
+  - [ssh-hosts.pl](#ssh-hostspl)
+  - [Date & Time Utilities](#date--time-utilities)
+
 ---------------------------------------------------------------------------
 
 ## Modules ##
@@ -13,46 +25,39 @@ A lot of my scripts add color to make things stand out more, or to highlight
 warnings and errors. For that reason, I have centralized ANSI escape sequences.
 Put these in `~/.local/lib`
 
-* `local/lib/bash/Ansi` - a collections of ANSI codes for bash scripts
-> Include in your scripts by using these lines:
-```bash
-			PATH="${HOME}/.local/lib/bash:${PATH}"
-			source Ansi
-```
+* [`.local/lib/bash/Ansi`](.local/lib/bash/Ansi) - a collections of ANSI codes for bash scripts
+    - Include in your scripts by using these lines:
+        ```bash
+        PATH="${HOME}/.local/lib/bash:${PATH}"
+        source Ansi
+        ```
 
-* `local/lib/perl/Ansi.pm` - a collections of ANSI codes for perl scripts
-> Include in your scripts by using these lines:
-```perl
-			use lib glob("~/.local/lib/perl");
-			use Ansi qw(:DEFAULT);
-```
+* [`.local/lib/perl/Ansi.pm`](.local/lib/perl/Ansi.pm) - a collections of ANSI codes for perl scripts
+    - Include in your scripts by using these lines:
+        ```perl
+        use lib glob("~/.local/lib/perl");
+        use Ansi qw(:DEFAULT);
+        ```
 
 
 ## Scripts ##
 
 ---------------------------------------------------------------------------
-### ansi.sh ###
+### [ansi.sh](other/ansi.sh) ###
 A bash script that shows selected ANSI escape codes on the screen for easy
 reference.
 
-> #### Escape Page ####
-> ![](images/ansi_e.png)
-
-> #### Attributes Page ####
-> ![](images/ansi_a.png)
-
-> #### 256 Foreground Colors Page ####
-> ![](images/ansi_f.png)
-
-> #### 256 Background Colors Page ####
-> ![](images/ansi_b.png)
-
-> #### Line-draw Page ####
-> ![](images/ansi_l.png)
+| **Escape Page**                | **Attributes Page**            |
+|--------------------------------|--------------------------------|
+| ![](images/ansi_e.png)         | ![](images/ansi_a.png)         |
+| **256 Foreground Colors Page** | **256 Background Colors Page** |
+| ![](images/ansi_f.png)         | ![](images/ansi_b.png)         |
+| **Line-draw Page**             |                                |
+| ![](images/ansi_l.png)         |                                |
 
 
 ---------------------------------------------------------------------------
-### ascii.py ###
+### [ascii.py](other/ascii.py) ###
 A python/tkinter script that shows ASCII codes for reference.
 
 The top half shows
@@ -64,12 +69,12 @@ The bottom half shows extended ASCII characters. There are quite a few sets of
 extended ASCII, and the dropdown gives you the option of showing four of the
 most popular sets: ISO-8859-1, CP437, CP1252, and MacRoman.
 
-> #### ASCII Table ####
-> ![](images/ascii.png)
+- **ASCII Table**  
+  ![](images/ascii.png)
 
 
 ---------------------------------------------------------------------------
-### dtach-ctl.sh ###
+### [dtach-ctl.sh](dtach-ctl/dtach-ctl.sh) ###
 I needed a program that would give me a persistent remote terminal on a server
 at work, because the connection would drop and the worst possible times. I also
 wanted something that would let me have multiple sessions active in the same
@@ -103,12 +108,12 @@ supply tab-completion for the `s, `sk`, and `sw` commands.
 * Run `dtach-ctl.sh` or `s -h` to get a quick list of how to use it.
 * Enter `s session1` or whatever you want to call your session. For the example below, I ran `s jcf`, then `Ctrl+\` to detach, `s jcf-pv`, then `Ctrl+\`, then `s root` to create three sessions. Then `sw jcf-pv` to switch to the `jcf-pv` session, the `sl` to list current sessions. Your active session shows with `*` after it.
 
-> #### dtach-ctl Sessions ####
-> ![](images/dtach-ctrl.png)
+- **dtach-ctl Sessions**  
+  ![](images/dtach-ctrl.png)
 
 
 ---------------------------------------------------------------------------
-### svdir ###
+### [svdir](svdir/svdir) ###
 I often need to change to multiple directories, sometimes eight or more. I could
 (and did) use `pushd /some/very/long/path/name` and `pushd +1`, etc. to switch,
 or curser up or search history, or type or paste in the long `cd` commands. No
@@ -120,12 +125,12 @@ Then you can save the aliases in a bookmark file using `sbdirs projdirs`.
 Then next time you need that set, enter `lddirs projdirs` and all your aliases
 are back, ready to use.
 
-> #### svdir usage ####
-> ![](images/svdir.png)
+- **svdir Usage**  
+  ![](images/svdir.png)
 
 
 ---------------------------------------------------------------------------
-### sysinfo.pl ###
+### [sysinfo.pl](other/sysinfo.pl) ###
 I often need (or want) to see information about a system I'm working on. How
 much memory does it have? How big are the drives? What are the details about
 the CPU? What about the network, security, virtualization?
@@ -133,43 +138,44 @@ the CPU? What about the network, security, virtualization?
 I wrote, and over time enhanced a script to show me a bunch of things I wanted
 to see about whatever system I'm on. This is the result.
 
-> #### System Information ####
-> ![](images/sysinfo.png)
+- **System Information**  
+  ![](images/sysinfo.png)
 
 
 ---------------------------------------------------------------------------
-### ssh-hosts.pl ###
+### [ssh-hosts.pl](other/ssh-hosts.pl) ###
 This is a little convenience script to list the hosts in my `~/.ssh/config`
-file. The hosts can be in groups. A group starts with lines like this:
+file. The hosts can be in groups. A group starts with lines like this:  
 ```
-    #---------------------------
-    # Github/Gitlab
-    #---------------------------
-    Host gh
-        HostName     github.com
-        IdentityFile id_git
+  #---------------------------
+  # Github/Gitlab
+  #---------------------------
+  Host gh
+      HostName     github.com
+      IdentityFile id_git
 
-    Host gl
-        HostName     gitlab.com
-        IdentityFile id_git
+  Host gl
+      HostName     gitlab.com
+      IdentityFile id_git
 ```
+
 The dashes are require both before and after the group name, but the number
 of dashes doesn't matter -- as long as there's at least one dash.
 
-> #### ssh Host Listing ####
-> ![](images/ssh-hosts.png)
+- **SSH Host Listing**  
+  ![](images/ssh-hosts.png)
 
 
 ---------------------------------------------------------------------------
-### Date & Time Utilities ###
+### [Date & Time Utilities](date-time) ###
 Some things I wrote that sometimes come in handy.
 
-* `date2ts.sh` - Alone, gives the current timestamp. Or include a date string, and it will convert that to a timestamp.
-* `ts2date.sh` - The reverse of `date2ts.sh`
-* `elapsed.sh` - Give it a starting and optional ending date, and it will display the elapsed time.
+* [`date2ts.sh`](date-time/date2ts.sh) - Alone, gives the current timestamp. Or include a date string, and it will convert that to a timestamp.
+* [`ts2date.sh`](date-time/ts2date.sh) - The reverse of `date2ts.sh`
+* [`elapsed.sh`](date-time/elapsed.sh) - Give it a starting and optional ending date, and it will display the elapsed time.
 
 ```
-    $ date2ts.sh 
+    $ date2ts.sh
     timestamp is: 1777136294
 
     $ date2ts.sh "Mar 12, 2010 17:00"
