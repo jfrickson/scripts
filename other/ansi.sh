@@ -7,7 +7,6 @@ dlm="${_dr}"
 # ds="${dlm};"
 escl="${_dy}Esc"
 val="${_dc}"
-printf -v col2 "\e[2G"
 
 prmpt="${_B} ${_dr}E${_w}: Esc Seqs  "
 prmpt="${prmpt}${_dr}A${_w}: Attrib  "

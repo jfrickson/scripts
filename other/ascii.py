@@ -31,7 +31,8 @@ class AsciiTableApp(tk.Tk):
 
     def create_widgets(self):
         # Standard ASCII table (always shown)
-        ascii_label = tk.Label(self, text="Standard ASCII (32-127)", font=('Arial', 11, 'bold'))
+        ascii_label = tk.Label(self, text="Standard ASCII (32-127)",
+                               font=('Arial', 11, 'bold'))
         ascii_label.pack(pady=(10, 5))
 
         self.ascii_frame = tk.Frame(self)
@@ -51,7 +52,9 @@ class AsciiTableApp(tk.Tk):
 
         # Dropdown for extended sets
         self.dropdown_var = tk.StringVar()
-        self.dropdown = ttk.Combobox(self, textvariable=self.dropdown_var, state='readonly', width=25)
+        dropdown_width = max(len(key) for key in extended_sets.keys())
+        self.dropdown = ttk.Combobox(self, textvariable=self.dropdown_var,
+                                     state='readonly', width=dropdown_width)
         self.dropdown['values'] = list(extended_sets.keys())
         self.dropdown.current(0)
         self.dropdown.pack(pady=15)

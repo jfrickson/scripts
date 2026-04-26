@@ -115,8 +115,7 @@ function pop_entry()
 	unset 'parts[0]'		# Remove the first element
 	parts=("${parts[@]}")	# Re-index the array (shifts everything down)
 	if [[ -n "$1" ]]; then
-		local -n out=$1
-		out="${tok}"
+		printf -v "$1" '%s' "${tok}"
 	fi
 }
 
