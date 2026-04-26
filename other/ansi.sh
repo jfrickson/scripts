@@ -7,6 +7,7 @@ dlm="${_dr}"
 # ds="${dlm};"
 escl="${_dy}Esc"
 val="${_dc}"
+printf -v col2 "\e[2G"
 
 prmpt="${_B} ${_dr}E${_w}: Esc Seqs  "
 prmpt="${prmpt}${_dr}A${_w}: Attrib  "
@@ -46,7 +47,7 @@ _prt_seq3()
 _esc_seq()
 {
 	printf "%s" "${_cls}"
-	_setpos 2 30
+	_setpos 1 30
 	printf "%s ANSI Escape Sequences %s" "${_vdbW}" "${_rst}"
 
 	_setpos 5 1
@@ -88,8 +89,6 @@ _esc_seq()
 	printf "%s* %sVal%s for Erase Disp/Line - " "${_d}" "${val}" "${_rst}"
 	printf "%s0%s or none: to end   %s1%s: to beginning" "${val}" "${_rst}" "${val}" "${_rst}"
 	printf "   %s2%s: all" "${val}" "${_rst}"
-#CSI 6n 	DSR 	Device Status Report 	Reports the cursor position (CPR) by
-#					transmitting ESC[n;mR, where n is the row and m is the column.)
 }
 
 _prt_attr1()
@@ -159,26 +158,62 @@ _attributes()
 
 _line_draw()
 {
+	local ent_grp, ext_grp
+	printf -v ent_grp "\e(0"
+	printf -v ext_grp "\e(B"
+
 	printf "%s" "${_cls}"
 	_setpos 2 28
 	printf "%s ANSI Escape Sequences %s" "${_vdbW}" "${_rst}"
 
 	_setpos 6 1
-
 	printf "  %s%sLine-Drawing Characters%s - " "${_dc}" "${_u}" "${_rst}"
-	printf "%s%s(%s0%s <characters> %s%s(%sB%s\n\n" \
-		"${escl}" "${dlm}" "${val}" "${_rst}" "${escl}" "${dlm}" "${val}" "${_rst}"
+	printf "%s%s(0%s <characters> %s%s(B%s" \
+		"${escl}" "${dlm}" "${_rst}" "${escl}" "${dlm}" "${_rst}"
 
-	local col=0
-	for c in a b c d e f g h i j k l m n o p q r s t u v w x y z \` \~ \{ \| \}; do
-		printf "  %s  \e(0%s\e(B  " "${c}" "${c}"
-		((col++))
-		if [[ ${col} -gt 7 ]]; then
-			col=0
-			printf "\n\n"
-		fi
-	done
+	# Top row
+	_setpos 8 17
+	printf "%sl  q  q  w  q  q  k%s" "${val}" "${_rst}"
+
+	_setpos 9 17
+	printf "%sl  q  q  w  q  q  k%s" "${ent_grp}" "${ext_grp}"
+
+	# Empty row
+	_setpos 11 15
+	printf "%sx%s %sx%s      %sx%s %sx%s        %sx%s %sx%s" \
+		"${val}" "${_rst}" "${ent_grp}" "${ext_grp}" "${val}" "${_rst}" \
+		"${ent_grp}" "${ext_grp}" "${ent_grp}" "${ext_grp}" "${val}" "${_rst}"
+
+	# Line across row
+	_setpos 12 20
+	printf "%sq  q  n  q  q%s" "${val}" "${_rst}"
+	_setpos 13 15
+	printf "%st%s %st" "${val}" "${_rst}" "${ent_grp}"
+	printf "  q  q  n  q  q  u%s %su%s" "${ext_grp}" "${val}" "${_rst}"
+
+	# Empty row
+	_setpos 15 15
+	printf "%sx%s %sx%s      %sx%s %sx%s        %sx%s %sx%s" \
+		"${val}" "${_rst}" "${ent_grp}" "${ext_grp}" "${val}" "${_rst}" \
+		"${ent_grp}" "${ext_grp}" "${ent_grp}" "${ext_grp}" "${val}" "${_rst}"
+
+	# Bottom row
+	_setpos 17 15
+	printf "%sm%s %sm" "${val}" "${_rst}" "${ent_grp}"
+	printf "  q  q  v  q  q  j%s %sj%s" "${ext_grp}" "${val}" "${_rst}"
+	_setpos 18 20
+	printf "%sq  q  v  q  q%s" "${val}" "${_rst}"
+
+	# Other chars
+	_setpos 21 13
+	printf "%sa%s %sa%s" "${val}" "${_rst}" "${ent_grp}" "${ext_grp}"
+	printf "  %sd%s %sd%s" "${val}" "${_rst}" "${ent_grp}" "${ext_grp}"
+	printf "  %so%s %so%s" "${val}" "${_rst}" "${ent_grp}" "${ext_grp}"
+	printf "  %sq%s %sq%s" "${val}" "${_rst}" "${ent_grp}" "${ext_grp}"
+	printf "  %sr%s %sr%s" "${val}" "${_rst}" "${ent_grp}" "${ext_grp}"
+	printf "  %ss%s %ss%s" "${val}" "${_rst}" "${ent_grp}" "${ext_grp}"
 }
+
 
 _256_color_fg()
 {
