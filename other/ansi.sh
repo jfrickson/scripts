@@ -228,7 +228,7 @@ _256_color_fg()
 
 	_setpos 5 1
 	printf " %s%s256 Foreground Colors%s" "${_u}" "${_dc}" "${_rst}"
-	printf "   %s%s[%s48;5;%sx%sm%s - x = 256 color code%s" \
+	printf "   %s%s[%s38;5;%sx%sm%s - x = 256 color code%s" \
 		"${escl}" "${dlm}" "${_rst}" "${val}" "${dlm}" "${_dw}" "${_rst}"
 	printf "\n\n\n"
 	while [[ ${c} -le 255 ]]; do
@@ -266,7 +266,7 @@ _256_color_bg()
 	_setpos 5 1
 
 	printf " %s%s256 Background Colors%s" "${_u}" "${_dc}" "${_rst}"
-	printf "   %s%s[%s38;5;%sx%sm%s - x = 256 color code%s" \
+	printf "   %s%s[%s48;5;%sx%sm%s - x = 256 color code%s" \
 		"${escl}" "${dlm}" "${_rst}" "${val}" "${dlm}" "${_dw}" "${_rst}"
 	printf "\n\n\n"
 	while [[ ${c} -le 255 ]]; do
