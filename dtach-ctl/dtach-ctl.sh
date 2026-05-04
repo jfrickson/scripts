@@ -40,7 +40,7 @@ function check_dtach
 	[[ "${DTACH_DIR}" =~ "<YOUR_USERNAME>" ]] || return
 
 	printf "\n%s    The DTACH_DIR variable is not configured.\n" "${_dy}"
-	printf "    You can edit it manually yoursef, or the script\n"
+	printf "    You can edit it manually yourself, or the script\n"
 	printf "    can attempt to fix it for you by replacing the\n"
 	printf "    placeholder with your current home directory.\n"
 	printf "    It will change the DTACH_DIR variable\n    from:%s\n" "${_rst}"
@@ -72,7 +72,7 @@ function check_dtach
 					echo '  export PS1="\e[1m[$DTACH_SESSION]\e[0m $PS1"' \
 						>> "${HOME}/.bashrc"
 					echo 'fi' >> "${HOME}/.bashrc"
-					echo 'complete -W $(ls -1 -I ".*" /home/john/.dtach 2>/dev/null) s sk sw' \
+					echo "complete -W $(ls -1 -I \".*\" ${HOME}/.dtach 2>/dev/null) s sk sw" \
 						>> "${HOME}/.bashrc"
 				fi
 				printf "\n    %sYour ~/.bashrc has been updated (backup created as ~/.bashrc.bak).%s\n" \
@@ -93,6 +93,16 @@ function check_dtach
 	exit 1
 }
 
+#----------------------------------------------------------------------
+# function check_directory:
+#	Check if the DTACH_DIR directory exists and is a directory. If it
+#	does not exist, attempt to create it. This ensures that the script
+#	has a valid location to store session sockets and tracking files.
+#	The function also sets the permissions of the directory to allow
+#	group read/write/execute access, which is necessary if the user
+#	will be running the script with different UIDs (e.g. using sudo)
+#	and needs to access the same session directory.
+#----------------------------------------------------------------------
 function check_directory
 {
 	if [[ ! -d "${DTACH_DIR}" ]]; then
