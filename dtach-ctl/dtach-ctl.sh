@@ -55,7 +55,9 @@ function check_dtach
 		local script_path="$0"
 		[[ -L "${script_path}" ]] && script_path=$(readlink -f "${script_path}")
 
+		# Update this script here with the new value
 		sed -r -i.bak "s|/home/\s*<YOUR_USERNAME>\s*|${HOME}|g" "$script_path"
+
 		printf "\n    %sDTACH_DIR has been updated.%s\n\n" "${_dg}" "${_rst}"
 		printf "    %sDo you want to check if your ~/.bashrc has the\n" "${_dc}"
 		printf "    PS1 change and bash completion? [y|N]%s " "${_rst}"
@@ -63,8 +65,10 @@ function check_dtach
 		echo
 		if [[ "${answer}" =~ ^[Yy]$ ]]; then
 			if [[ -f "${HOME}/.bashrc" ]]; then
+				# Check if .bashrc already has the changes
 				grep -q "DTACH_SESSION" "${HOME}/.bashrc"
 				if [[ $? -ne 0 ]]; then
+					# Update .bashrc with PS1 change and completion for dtach sessions
 					cp -a "${HOME}/.bashrc" "${HOME}/.bashrc.bak"
 					echo -e "\n# Added by dtach-ctl.sh for session tracking" \
 						>> "${HOME}/.bashrc"
@@ -75,8 +79,10 @@ function check_dtach
 					echo "complete -W $(ls -1 -I \".*\" ${HOME}/.dtach 2>/dev/null) s sk sw" \
 						>> "${HOME}/.bashrc"
 				fi
+
 				printf "\n    %sYour ~/.bashrc has been updated (backup created as ~/.bashrc.bak).%s\n" \
 					"${_dg}" "${_rst}"
+
 			else
 				printf "\n    %sNo ~/.bashrc file found that needs updating.%s\n" \
 					"${_dy}" "${_rst}"
