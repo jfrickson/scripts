@@ -44,7 +44,7 @@ function check_dtach
 	printf "    can attempt to fix it for you by replacing the\n"
 	printf "    placeholder with your current home directory.\n"
 	printf "    It will change the DTACH_DIR variable\n    from:%s\n" "${_rst}"
-	printf "       %sDTACH_DIR=\"/home/ <YOUR_USERNAME> /.dtach\"%s\n" "${_d}" "${_rst}"
+	printf "       %sDTACH_DIR=\"/home/_<YOUR_USERNAME>_/.dtach\"%s\n" "${_d}" "${_rst}"
 	printf "    %sto:%s\n" "${_dy}" "${_rst}"
 	printf "       %sDTACH_DIR=\"${HOME}/.dtach\"%s\n\n" "${_d}" "${_rst}"
 	printf "    %sDo you want the script to fix this? [y|N]%s " "${_dc}" "${_rst}"
@@ -426,11 +426,9 @@ function detach_client
 # session, 'sw' for switching sessions).
 #----------------------------------------------------------------------
 
-check_dtach "$1"
-check_directory
-
 cmd=$(basename "$0")
-if [[ "${cmd}" = "dtach-ctl.sh" || "$1" = "-h" ]]; then
+
+if [[ "${cmd}" = "dtach-ctl.sh" || "$1" = "-h" || "$1" = "-help" || "$1" = "--help" ]]; then
 	printf "\n%sUsage:%s\n" "${_d}" "${_rst}"
 	printf "   %ssl%s       %ss%session %sl%sist\n" "${_dy}" "${_rst}" \
 				"${_d}" "${_rst}" "${_d}" "${_rst}"
@@ -448,5 +446,8 @@ if [[ "${cmd}" = "dtach-ctl.sh" || "$1" = "-h" ]]; then
 				"${_dy}" "${_rst}" "${_d}" "${_rst}"
 	exit 1
 fi
+
+check_dtach "$1"
+check_directory
 
 ${cmd} "$@"
