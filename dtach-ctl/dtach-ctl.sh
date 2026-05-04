@@ -1,25 +1,15 @@
 #!/bin/bash
 
 # Configuration
-DTACH_DIR="/home/<YOUR_USERNAME>/.dtach"
+DTACH_DIR="/home/ <YOUR_USERNAME> /.dtach"
 
 # Things to send to new sessions based on their ID (e.g. to set up environment)
 declare -A feed_keys=(
-	[root]='sudo -i\n'
+	[root]='exec sudo -i\necho "You are now root -- be careful!"\n'
 	[dummy]='echo "Welcome to the dummy session!"\n'
 )
 
 # ==================== Modify items above this line ====================
-
-if [[ "${DTACH_DIR}" =~ "<YOUR_USERNAME>" ]]; then
-	echo "Please edit the DTACH_DIR variable to set your home directory."
-	echo "Do not use ~ or \$HOME in the path, as this script may be run"
-	echo "in contexts where those are not properly expanded."
-	echo "Example: DTACH_DIR=\"/home/klaatu/.dtach\""
-	exit 1
-fi
-mkdir -p "${DTACH_DIR}"
-chmod g+rwx "${DTACH_DIR}" 2>/dev/null || true
 
 # Ansi color codes for output
 printf -v _rst	"\e[0m"				# Reset
@@ -27,7 +17,89 @@ printf -v _d	"\e[1m"				# Bold
 printf -v _dr	"\e[1;31m"			# Bold Red
 printf -v _dy	"\e[1;33m"			# Bold Yellow
 printf -v _dg	"\e[1;32m"			# Bold Green
+printf -v _dc	"\e[1;36m"			# Bold Cyan
 printf -v _vdbW	"\e[1;7;37;44m"		# Dark Blue on White
+
+
+#----------------------------------------------------------------------
+# function check_dtach:
+#	Check if the DTACH_DIR variable is configured properly. If it still
+#	contains the placeholder, prompt the user to fix it by replacing
+#	the placeholder with their home directory. This ensures that the
+#	script can function correctly without manual editing, while also
+#	providing a clear explanation of the issue and the option to fix
+#	it automatically. If the user chooses not to fix it, the script
+#	will exit with an error message. This function is called at the
+#	start of the script to ensure that the environment is set up
+#	correctly before any other operations are performed.
+#----------------------------------------------------------------------
+function check_dtach
+{
+	local cmd="$1"
+
+	[[ "${DTACH_DIR}" =~ "<YOUR_USERNAME>" ]] || return
+
+	printf "\n%s    The DTACH_DIR variable is not configured.\n" "${_dy}"
+	printf "    You can edit it manually yoursef, or the script\n"
+	printf "    can attempt to fix it for you by replacing the\n"
+	printf "    placeholder with your current home directory.\n"
+	printf "    It will change the DTACH_DIR variable\n    from:%s\n" "${_rst}"
+	printf "       %sDTACH_DIR=\"/home/ <YOUR_USERNAME> /.dtach\"%s\n" "${_d}" "${_rst}"
+	printf "    %sto:%s\n" "${_dy}" "${_rst}"
+	printf "       %sDTACH_DIR=\"${HOME}/.dtach\"%s\n\n" "${_d}" "${_rst}"
+	printf "    %sDo you want the script to fix this? [y|N]%s " "${_dc}" "${_rst}"
+	read -n 1 -rs answer
+	echo
+
+	if [[ "${answer}" =~ ^[Yy]$ ]]; then
+		local script_path="$0"
+		[[ -L "${script_path}" ]] && script_path=$(readlink -f "${script_path}")
+
+		sed -r -i.bak "s|/home/\s*<YOUR_USERNAME>\s*|${HOME}|g" "$script_path"
+		printf "\n    %sDTACH_DIR has been updated.%s\n\n" "${_dg}" "${_rst}"
+		printf "    %sDo you want to check if your ~/.bashrc has the\n" "${_dc}"
+		printf "    PS1 change and bash completion? [y|N]%s " "${_rst}"
+		read -n 1 -rs answer
+		echo
+		if [[ "${answer}" =~ ^[Yy]$ ]]; then
+			if [[ -f "${HOME}/.bashrc" ]]; then
+				grep -q "DTACH_SESSION" "${HOME}/.bashrc"
+				if [[ $? -ne 0 ]]; then
+					cp -a "${HOME}/.bashrc" "${HOME}/.bashrc.bak"
+					echo -e "\n# Added by dtach-ctl.sh for session tracking" \
+						>> "${HOME}/.bashrc"
+					echo 'if [ -n "$DTACH_SESSION" ]; then' >> "${HOME}/.bashrc"
+					echo '  export PS1="\e[1m[$DTACH_SESSION]\e[0m $PS1"' \
+						>> "${HOME}/.bashrc"
+					echo 'fi' >> "${HOME}/.bashrc"
+					echo 'complete -W $(ls -1 -I ".*" /home/john/.dtach 2>/dev/null) s sk sw' \
+						>> "${HOME}/.bashrc"
+				fi
+				printf "\n    %sYour ~/.bashrc has been updated (backup created as ~/.bashrc.bak).%s\n" \
+					"${_dg}" "${_rst}"
+			else
+				printf "\n    %sNo ~/.bashrc file found that needs updating.%s\n" \
+					"${_dy}" "${_rst}"
+			fi
+		fi
+
+		printf "\n    %sDTACH_DIR has been updated. Rerunning the script now...%s" \
+			"${_dg}" "${_rst}"
+		sleep 2
+		exec "$0" "$cmd"
+	fi
+
+	[[ -n "${answer}" ]] && echo
+	exit 1
+}
+
+function check_directory
+{
+	if [[ ! -d "${DTACH_DIR}" ]]; then
+		mkdir -p "${DTACH_DIR}"
+		chmod g+rwx "${DTACH_DIR}" 2>/dev/null
+	fi
+}
 
 #----------------------------------------------------------------------
 # function sk:
@@ -150,7 +222,7 @@ function s
 	local keys="${feed_keys[${id}]}"
 
 	if [[ -n "${DTACH_SESSION}" ]]; then
-		printf "\n%sAlready in a dtach session. Please exit or detach first.%s\n\n" "${_dr}" "${_rst}"
+		sw "$id"
 		return
 	elif [[ -S "${sock}" ]]; then
 		attach_with_tracking "${id}" "${sock}"
@@ -329,11 +401,17 @@ function detach_client
 
 
 #----------------------------------------------------------------------
-# Main command dispatch. This checks the name of the script or the first
-# argument to determine which function to call. If the script is called
-# without arguments or with '-h', it prints the usage information. Otherwise,
-# it calls the corresponding function based on the command (e.g. 'sl' for listing sessions, 's' for attaching/creating a session, 'sc' for cleaning stale sessions, 'sk' for killing a session, 'sw' for switching sessions).
+# Main command dispatch. This checks the name of the script or the
+# first argument to determine which function to call. If the script is
+# called without arguments or with '-h', it prints the usage
+# information. Otherwise, it calls the corresponding function based on
+# the command (e.g. 'sl' for listing sessions, 'sc' for cleaning stale
+# sessions, 's' for attaching/creating a session, 'sk' for killing a
+# session, 'sw' for switching sessions).
 #----------------------------------------------------------------------
+
+check_dtach "$1"
+check_directory
 
 cmd=$(basename "$0")
 if [[ "${cmd}" = "dtach-ctl.sh" || "$1" = "-h" ]]; then
