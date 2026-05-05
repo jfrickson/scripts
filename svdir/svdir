@@ -1,20 +1,31 @@
 # shellcheck shell=bash
 
-#-----------------------------------------------------
+#======================================================================
 # Initialize common variables
-#-----------------------------------------------------
-version="1.0.0"
+#======================================================================
+
+version="1.0.1"
 verbose=1
-printf -v _d "\\033[1m"			# Print bold
-printf -v _r "\\033[1;31m"		# Print bold red
-printf -v _y "\\033[1;33m"		# Print bold yellow
-printf -v _c "\\033[1;36m"		# Print bold cyan
-printf -v _rst "\\033[0m"		# Reset to normal color
+_d=$'\e[1m'				# Print bold
+_r=$'\e[1;31m'			# Print bold red
+_y=$'\e[1;33m'			# Print bold yellow
+_c=$'\e[1;36m'			# Print bold cyan
+_g=$'\e[1;32m'			# Print bold green
+_rst=$'\e[0m'			# Reset to normal color
 
 declare -i numdirs=0
 base="${HOME}/.config/svdir"	# Directory for bookmark files
 [[ -n "${SVDIR_CFG}" ]] && base="${SVDIR_CFG}"
 
+#======================================================================
+# Functions
+#======================================================================
+
+
+#----------------------------------------------------------------------
+# Function:		short_usage
+# Description:	Print a short usage message for the given command
+#----------------------------------------------------------------------
 function short_usage()
 {
 	local descr dir_lit="dirs" args=
@@ -85,6 +96,10 @@ function short_usage()
 	printf "For full usage, enter: %ssvdir -H%s\n\n" "${_d}" "${_rst}"
 }
 
+#----------------------------------------------------------------------
+# Function:		long_usage
+# Description:	Print a long usage message for the script
+#----------------------------------------------------------------------
 function long_usage()
 {
 	cat <<- EOF
@@ -173,9 +188,71 @@ function long_usage()
 	return
 }
 
-#-----------------------------------------------------
-# Save the current directory as an alias
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		check_aliases
+# Description:	Check if the expected aliases are defined, and
+#				offer to add them if not
+#----------------------------------------------------------------------
+function check_aliases()
+{
+	local -a als entry append_file="${HOME}/.bashrc"
+	local -A aliases script="${BASH_SOURCE[0]}"
+
+	mapfile -t als < <(alias | grep -E "/svdir %")
+	for entry in "${als[@]}"; do
+		if [[ $entry =~ "alias scdir" ]]; then		aliases[sc]="Found"
+		elif [[ $entry =~ "alias svdir" ]]; then	aliases[sv]="Found"
+		elif [[ $entry =~ "alias lsdirs" ]]; then	aliases[ls]="Found"
+		elif [[ $entry =~ "alias rmdirs" ]]; then	aliases[rm]="Found"
+		elif [[ $entry =~ "alias sbdirs" ]]; then	aliases[sb]="Found"
+		elif [[ $entry =~ "alias lbdirs" ]]; then	aliases[lb]="Found"
+		elif [[ $entry =~ "alias lddirs" ]]; then	aliases[ld]="Found"
+		elif [[ $entry =~ "alias dbdirs" ]]; then	aliases[db]="Found"
+		fi
+	done
+
+	if [[ ${#aliases[@]} -eq 8 ]]; then return 0; fi
+
+	put "W" "Some or all svdir aliases are missing:\n"
+	for key in sc sv ls rm sb lb ld db; do
+		if [[ -z "${aliases[$key]}" ]]; then
+			aliases[$key]="Missing"
+			printf "      ${key}   ${_y}Missing${_rst}\n"
+		else
+			printf "      ${key}   Found\n"
+		fi
+	done
+
+	put "h" "    Do you want this script to add them? [Y|n] "
+	read -n1 -r -s
+	printf "\n\n"
+
+	[[ -z "${REPLY}" ]] && REPLY="Y"
+	[[ "${REPLY}" =~ [yY] ]] || return
+
+	if [[ -f "${HOME}/.alias" ]]; then
+		append_file="${HOME}/.alias"
+	fi
+
+	for key in sc sv ls rm sb lb ld db; do
+		entry="${key}dirs"
+		[[ $key == "sc" || $key == "sv" ]] && entry="${key}dir"
+
+		if [[ "${aliases[$key]}" == "Missing" ]]; then
+			alias ${entry}=". ${script} % ${key}"
+			echo "alias ${entry}='. ${script} % ${key}'" >> "${append_file}"
+			printf "      Added alias for ${key}\n"
+		fi
+	done
+	printf "\n    %sThe new aliases are now active.%s\n\n" "${_g}" "${_rst}"
+	return 1
+}
+
+
+#----------------------------------------------------------------------
+# Function:		save_current
+# Description:	Save the current directory as an alias
+#----------------------------------------------------------------------
 function save_current()
 {
 	local _cwd _dir
@@ -202,9 +279,10 @@ function save_current()
 	put "p" "alias ${_dir}='cd ${_cwd}'"
 }
 
-#-----------------------------------------------------
-# List currently saved directory aliases
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		list_saved
+# Description:	List currently saved directory aliases
+#----------------------------------------------------------------------
 function list_saved()
 {
 	local als trg entry
@@ -226,9 +304,10 @@ function list_saved()
 	put "p" ""
 }
 
-#-----------------------------------------------------
-# Delete saved directory aliases
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		del_saved
+# Description:	Delete saved directory aliases
+#----------------------------------------------------------------------
 function del_saved()
 {
 	local als entry
@@ -254,9 +333,10 @@ function del_saved()
 	put "p" ""
 }
 
-#-----------------------------------------------------
-# Save current aliases as a bookmark file
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		save_bkmarks
+# Description:	Save current aliases as a bookmark file
+#----------------------------------------------------------------------
 function save_bkmarks()
 {
 	local bkmark="$1"
@@ -293,9 +373,10 @@ function save_bkmarks()
 	put "b" "\nDirectories saved as '${bkmark}'\n\n"
 }
 
-#-----------------------------------------------------
-# List bookmark files or aliases in a bookmark file
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		list_bkmarks
+# Description:	List bookmark files or aliases in a bookmark file
+#----------------------------------------------------------------------
 function list_bkmarks()
 {
 	local bkmark="$1"
@@ -331,9 +412,10 @@ function list_bkmarks()
 	echo
 }
 
-#-----------------------------------------------------
-# Load aliases from a bookmark file
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		load_bkmrks
+# Description:	Load aliases from a bookmark file
+#----------------------------------------------------------------------
 function load_bkmrks()
 {
 	local bkmark="$1"
@@ -351,9 +433,10 @@ function load_bkmrks()
 	put "b" "\n'${bkmark}' loaded\n\n"
 }
 
-#-----------------------------------------------------
-# Delete a bookmark file
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		del_bkmarks
+# Description:	Delete a bookmark file
+#----------------------------------------------------------------------
 function del_bkmarks()
 {
 	local bkmark="$1"
@@ -373,9 +456,10 @@ function del_bkmarks()
 	put "b" "\n'${bkmark}' deleted\n\n"
 }
 
-#-----------------------------------------------------
-# Write text with colors
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		put
+# Description:	Write text with colors
+#----------------------------------------------------------------------
 function put()
 {
 	[[ $verbose -eq 0 ]] && return
@@ -395,9 +479,10 @@ function put()
 	printf "%b%s" "${msg}" "${_rst}"
 }
 
-#-----------------------------------------------------
-# Get a list of currently saved directories
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		get_saved
+# Description:	Get a list of currently saved directories
+#----------------------------------------------------------------------
 function get_saved()
 {
 	readarray -t list < <(alias | grep -E "^alias \.+.+='cd " | \
@@ -405,9 +490,10 @@ function get_saved()
     numdirs=${#list[*]}
 }
 
-#-----------------------------------------------------
-# Check if a bookmark file is valid
-#-----------------------------------------------------
+#----------------------------------------------------------------------
+# Function:		check_file
+# Description:	Check if a bookmark file is valid
+#----------------------------------------------------------------------
 function check_file()
 {
 	local fn="$1" fname fspec line
@@ -437,9 +523,9 @@ function check_file()
 	return 0
 }
 
-#-----------------------------------------------------
+#======================================================================
 # Main processing
-#-----------------------------------------------------
+#======================================================================
 function main()
 {
 	if [[ "$1" == "%" ]]; then shift; else long_usage; return; fi
@@ -461,4 +547,5 @@ function main()
 	esac
 }
 
+check_aliases || return
 main "$@"
