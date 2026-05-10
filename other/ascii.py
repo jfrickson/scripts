@@ -1,8 +1,12 @@
 #!/usr/bin/env python3.13
 
+from marshal import version
+import sys
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
+
+ascii_version = "2.0.1"
 
 # Extended ASCII sets with their Python codec names and value ranges
 extended_sets = {
@@ -183,5 +187,16 @@ class AsciiTableApp(tk.Tk):
                 self.highlighted = idx
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        sys.argv = sys.argv[1:]  # Remove script name from arguments
+        for arg in sys.argv:
+            if arg in ('-V', '--version'):
+                print(f'\nASCII Table App - Version {ascii_version}\n')
+                sys.exit(0)
+            else:
+                print(f'Unknown argument: {arg}')
+                print('Usage: ascii.py [-V|--version]')
+                sys.exit(1)
+
     app = AsciiTableApp()
     app.mainloop()

@@ -22,6 +22,11 @@ base="${HOME}/.config/svdir"	# Directory for bookmark files
 #======================================================================
 
 
+function version()
+{
+	printf "\n%sSVDir - Version %s%s\n\n" "${_g}" "${version}" "${_rst}"
+}
+
 #----------------------------------------------------------------------
 # Function:		short_usage
 # Description:	Print a short usage message for the given command
@@ -31,7 +36,7 @@ function short_usage()
 	local descr dir_lit="dirs" args=
 
 	case $1 in
-		sc)
+		sc|sv)
 			dir_lit="dir"
 			descr="Save current directory"
 			args="name"
@@ -528,9 +533,13 @@ function check_file()
 #======================================================================
 function main()
 {
-	if [[ "$1" == "%" ]]; then shift; else long_usage; return; fi
+	[[ "${1:-}" == "-V" ]] && { version; return; }
+	[[ "${1:-}" == "-h" ]] && { short_usage "$1"; return; }
+	if [[ "$1" == "%" ]]; then shift; else short_usage; return; fi
+
 	[[ "${2:-}" == "-H" ]] && { long_usage; return; }
 	[[ "${2:-}" == "-h" ]] && { short_usage "$1"; return; }
+	[[ "${2:-}" == "-V" ]] && { version; return; }
 	[[ "${2:-}" == "-q" ]] && { set -- "$1" "${@:3}"; verbose=0; }
 
 	case $1 in

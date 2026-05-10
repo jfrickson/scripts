@@ -3,6 +3,8 @@
 PATH="${HOME}/.local/lib/bash:${PATH}"
 . Ansi
 
+version="1.0.3"
+
 dlm="${_dr}"
 # ds="${dlm};"
 escl="${_dy}Esc"
@@ -291,6 +293,11 @@ _256_color_bg()
 
 	printf "%s" "${_rst}"
 }
+
+if [[ "${1}" = "-V" || "${1}" = "--version" ]]; then
+	printf "\n%sANSI Escape Sequences - Version %s%s\n\n" "${_dg}" "${version}" "${_rst}"
+	exit 0
+fi
 
 if [[ -n "${1}" ]]; then opt="$1"; else opt=e; fi
 
