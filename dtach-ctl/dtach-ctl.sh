@@ -11,6 +11,8 @@ declare -A feed_keys=(
 
 # ==================== Modify items above this line ====================
 
+version="1.0.1"
+
 # Ansi color codes for output
 printf -v _rst	"\e[0m"				# Reset
 printf -v _d	"\e[1m"				# Bold
@@ -429,7 +431,8 @@ function detach_client
 cmd=$(basename "$0")
 
 if [[ "${cmd}" = "dtach-ctl.sh" || "$1" = "-h" || "$1" = "-help" || "$1" = "--help" ]]; then
-	printf "\n%sUsage:%s\n" "${_d}" "${_rst}"
+	printf "\n%sDtach Control Script - Version %s%s\n" "${_dg}" "${version}" "${_rst}"
+	printf "%sUsage:%s\n" "${_d}" "${_rst}"
 	printf "   %ssl%s       %ss%session %sl%sist\n" "${_dy}" "${_rst}" \
 				"${_d}" "${_rst}" "${_d}" "${_rst}"
 	printf "   %ss  <id>%s  attach to or create a %ss%session named %sid%s\n" \

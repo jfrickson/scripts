@@ -7,6 +7,8 @@ use Ansi qw(:DEFAULT);
 use List::Util qw(first);
 use Term::ReadKey;
 
+my $version = "2.0.1";
+
 my $header = "  ${_vdbW}                           System Information                             ${_rst}\n\n";
 my $footer = "\n  ${_dwB}                  Press Q to quit, Up/Down to scroll                      ${_rst}";
 
@@ -388,6 +390,19 @@ sub page_output
 	}
 }
 
+
+if (scalar @ARGV > 0) {
+	for my $arg (@ARGV) {
+		if ($arg eq '-V' || $arg eq '--version') {
+			print "\n${_dg}SysInfo Script - Version $version${_rst}\n\n";
+			exit 0;
+		} else {
+			print "Unknown argument: $arg\n";
+			print "Usage: sysinfo.pl [-V|--version]\n";
+			exit 1;
+		}
+	}
+}
 
 my $basic = get_basic();
 my ($cpu, $mem) = get_cpu_mem();
