@@ -115,7 +115,9 @@ function pop_entry()
 	unset 'parts[0]'		# Remove the first element
 	parts=("${parts[@]}")	# Re-index the array (shifts everything down)
 	if [[ -n "$1" ]]; then
-		printf -v "$1" '%s' "${tok}"
+		local -n out=$1
+		# shellcheck disable=SC2034
+		out="${tok}"
 	fi
 }
 
