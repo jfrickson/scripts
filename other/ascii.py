@@ -20,7 +20,7 @@ class AsciiTableApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('ASCII Table: Decimal')
-        self.geometry('500x800')
+        self.geometry('500x820')
         self.mono_font = font.Font(family='Courier', size=10)
         self.number_format = 'dec'  # dec, oct, hex
         self.selected_set = None
@@ -53,6 +53,15 @@ class AsciiTableApp(tk.Tk):
                                   relief='solid', borderwidth=1)
                 label.grid(row=r, column=c, padx=2, pady=2)
                 self.ascii_labels.append(label)
+
+        hint_label = tk.Label(
+            self,
+            text='Press a key to highlight it in the table. Use ⇽/⇾ to switch Decimal, Octal, and Hex.',
+            font=('Arial', 8),
+            justify='center',
+            anchor='center',
+        )
+        hint_label.pack(pady=(3, 5))
 
         # Dropdown for extended sets
         self.dropdown_var = tk.StringVar()
@@ -110,8 +119,11 @@ class AsciiTableApp(tk.Tk):
         for idx, n in enumerate(self.ascii_codes):
             char = chr(n) if 32 <= n < 128 else ''
             text = f'{self.format_number(n)} {char}'
-            self.ascii_labels[idx].config(text=text, bg=self.cget('bg'))
-        self.highlighted = None
+            if self.highlighted == idx:
+                bg = 'yellow'
+            else:
+                bg = self.cget('bg')
+            self.ascii_labels[idx].config(text=text, bg=bg)
 
     def update_extended_table(self, event=None):
         set_info = extended_sets[self.dropdown_var.get()]
@@ -126,8 +138,11 @@ class AsciiTableApp(tk.Tk):
         for idx, n in enumerate(self.extended_codes):
             char = get_char(n)
             text = f'{self.format_number(n)} {char}'
-            self.extended_labels[idx].config(text=text, bg=self.cget('bg'))
-        self.highlighted_ext = None
+            if self.highlighted_ext == idx:
+                bg = 'yellow'
+            else:
+                bg = self.cget('bg')
+            self.extended_labels[idx].config(text=text, bg=bg)
 
     def next_format(self, event=None):
         formats = ['dec', 'oct', 'hex']
