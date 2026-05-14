@@ -20,7 +20,7 @@ class AsciiTableApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('ASCII Table: Decimal')
-        self.geometry('500x820')
+        self.geometry('460x790')
         self.mono_font = font.Font(family='Courier', size=10)
         self.number_format = 'dec'  # dec, oct, hex
         self.selected_set = None
@@ -37,7 +37,7 @@ class AsciiTableApp(tk.Tk):
         # Standard ASCII table (always shown)
         ascii_label = tk.Label(self, text="Standard ASCII (32-127)",
                                font=('Arial', 11, 'bold'))
-        ascii_label.pack(pady=(10, 5))
+        ascii_label.pack(pady=(10, 0))
 
         self.ascii_frame = tk.Frame(self)
         self.ascii_frame.pack(pady=5)
@@ -61,7 +61,7 @@ class AsciiTableApp(tk.Tk):
             justify='center',
             anchor='center',
         )
-        hint_label.pack(pady=(3, 5))
+        hint_label.pack(pady=(2, 5))
 
         # Dropdown for extended sets
         self.dropdown_var = tk.StringVar()
@@ -70,7 +70,7 @@ class AsciiTableApp(tk.Tk):
                                      state='readonly', width=dropdown_width)
         self.dropdown['values'] = list(extended_sets.keys())
         self.dropdown.current(0)
-        self.dropdown.pack(pady=15)
+        self.dropdown.pack(pady=(10, 5))
         self.dropdown.bind('<<ComboboxSelected>>', self.update_extended_table)
 
         # Extended ASCII table frame (shown when selected)
