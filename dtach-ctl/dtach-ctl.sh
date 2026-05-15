@@ -3,10 +3,23 @@
 # Configuration
 DTACH_DIR="/home/ <YOUR_USERNAME> /.dtach"
 
-# Things to send to new sessions based on their ID (e.g. to set up environment)
+#----------------------------------------------------------------------
+# Things to send to new sessions based on their ID (e.g. to set up
+# environment.) The keys are treated as regex patterns to match against
+# the session ID, and the first matching entry will be used to
+# determine the keys to send to that session.
+#
+# WARNING: Do not touch the "declare -A feed_keys" line, or the ")" line, since the
+# script parses this section to determine the order of keys. You can
+# add/remove/modify entries in between as needed, one entry per line.
+#----------------------------------------------------------------------
 declare -A feed_keys=(
-	[root]='exec sudo -i\necho "You are now root -- be careful!"\n'
+	# Only matches "root" exactly, not "root123" or "myroot"
+	[^root$]='exec sudo -i\necho "You are now root -- be careful!"\n'
+	# Matches any "dummy" session (e.g. "dummy", "my_dummy123", "dummy_session")
 	[dummy]='echo "Welcome to the dummy session!"\n'
+	# Matches any session that starts with "abc" (e.g. "abc", "abc123")
+	[^abc]='source abc-profile\n'
 )
 
 # ==================== Modify items above this line ====================
@@ -230,14 +243,33 @@ function sl
 #----------------------------------------------------------------------
 function s
 {
+	local id="$1"
+	local sock="${DTACH_DIR}/${id}"
+	local item keys
+	local -a feed_key_order
+
 	if [[ -z "$1" ]]; then
 		printf "\n%sYou must specify a session id%s\n" "${_dr}" "${_rst}"
 		return
 	fi
 
-	local id="$1"
-	local sock="${DTACH_DIR}/${id}"
-	local keys="${feed_keys[${id}]}"
+	# Build ordered keys from this script's feed_keys declaration
+	mapfile -t feed_key_order < <(
+		awk '
+			$0 ~ /^declare -A feed_keys=\(/ { in_block=1; next }
+			in_block && $0 ~ /^\)/ { in_block=0; exit }
+			in_block {
+				if (match($0, /^[[:space:]]*\[([^]]+)\]=/, m)) print m[1]
+			}
+		' "${BASH_SOURCE[0]}"
+	)
+
+	for item in "${feed_key_order[@]}"; do
+		if [[ "${id}" =~ ${item} ]]; then
+			keys="${feed_keys[${item}]}"
+			break
+		fi
+	done
 
 	if [[ -n "${DTACH_SESSION}" ]]; then
 		sw "$id"
