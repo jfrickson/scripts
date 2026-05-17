@@ -24,7 +24,7 @@ declare -A feed_keys=(
 
 # ==================== Modify items above this line ====================
 
-version="1.0.1"
+version="1.1.0"
 
 # Ansi color codes for output
 printf -v _rst	"\e[0m"				# Reset
@@ -373,6 +373,36 @@ function sw
 }
 
 #----------------------------------------------------------------------
+# function sd:
+#	Detach from the current session. This function attempts to detach
+#	the client by sending it a HUP signal. If the client is running
+#	under a different UID and cannot be signaled, it falls back to
+#	creating a detach request file that the owner-side watcher will
+#	detect and handle. This allows for cross-UID detach requests,
+#	albeit with a slight delay as the watcher process checks for
+#	requests. If the detach request cannot be made, it informs the
+#	user to detach manually using the default dtach key (Ctrl+\).
+#----------------------------------------------------------------------
+function sd
+{
+	local id="${DTACH_SESSION}"
+
+	if [[ -z "${id}" ]]; then
+		printf "%sNot in a dtach session%s\n" "${_dy}" "${_rst}"
+		return
+	fi
+
+	local pid_file="${DTACH_DIR}/.pid_${id:-}"
+
+	local client_pid
+	client_pid=$(<"${pid_file}")
+	if ! detach_client "${id}" "${client_pid}"; then
+		printf "%sCould not auto-detach. Press Ctrl+\\ to detach manually.%s\n" \
+				"${_dy}" "${_rst}"
+	fi
+}
+
+#----------------------------------------------------------------------
 # function attach_with_tracking:
 #	Called by function `s`
 #	Helper function to attach to a dtach session while also setting up
@@ -449,6 +479,38 @@ function detach_client
 	return 1
 }
 
+#----------------------------------------------------------------------
+# function usage:
+#	Print usage information for the script, including available
+#	commands and their descriptions. This function is called when the
+#	script is run without arguments or with the '-h' flag, providing
+#	users with a clear guide on how to use the script and what
+#	commands are available for managing dtach sessions.
+#----------------------------------------------------------------------
+function usage
+{
+	printf "\n%sDtach Control Script - Version %s%s\n" "${_dg}" "${version}" "${_rst}"
+	printf "%sUsage:%s\n" "${_d}" "${_rst}"
+	printf "   %ssl%s       %ss%session %sl%sist\n" "${_dy}" "${_rst}" \
+			"${_d}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ss  <id>%s  attach to or create a %ss%session named %sid%s\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
+	printf "   %ssc%s       stale %ss%session %sc%slean up \n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ssk <id>%s  %ss%session %sk%sill by %sid%s\n" "${_dy}" \
+			"${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
+	printf "   %ssw <id>%s  %ssw%sitch session to %sid%s\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
+	printf "   %ssw +%s     %ssw%sitch to next session\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ssw -%s     %ssw%sitch to previous session\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ssd%s       %sd%setach from current session\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %sCtrl+\\%s   to detach from session (Dtach default)\n\n" \
+			"${_dy}" "${_rst}"
+	exit 0
+}
 
 #----------------------------------------------------------------------
 # Main command dispatch. This checks the name of the script or the
@@ -462,24 +524,14 @@ function detach_client
 
 cmd=$(basename "$0")
 
-if [[ "${cmd}" = "dtach-ctl.sh" || "$1" = "-h" || "$1" = "-help" || "$1" = "--help" ]]; then
-	printf "\n%sDtach Control Script - Version %s%s\n" "${_dg}" "${version}" "${_rst}"
-	printf "%sUsage:%s\n" "${_d}" "${_rst}"
-	printf "   %ssl%s       %ss%session %sl%sist\n" "${_dy}" "${_rst}" \
-				"${_d}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %ss  <id>%s  attach to or create a %ss%session named %sid%s\n" \
-				"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
-	printf "   %ssc%s       stale %ss%session %sc%slean up \n" \
-				"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %ssk <id>%s  %ss%session %sk%sill by %sid%s\n" "${_dy}" \
-				"${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
-	printf "   %ssw <id>%s  %ssw%sitch session to %sid%s\n" \
-				"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
-	printf "   %ssw +%s     %ssw%sitch to next session\n" \
-				"${_dy}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %ssw -%s     %ssw%sitch to previous session\n\n" \
-				"${_dy}" "${_rst}" "${_d}" "${_rst}"
-	exit 1
+if [[ "$1" = "-V" || "$1" = "--version" ]]; then
+	printf "%sDtach Control Script - Version %s%s\n" "${_dg}" \
+			"${version}" "${_rst}"
+	exit 0
+elif [[ "${cmd}" = "dtach-ctl.sh" ]]; then
+	usage
+elif [[ "$1" = "-h" || "$1" = "-help" || "$1" = "--help" ]]; then
+	usage
 fi
 
 check_dtach "$1"
