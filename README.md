@@ -39,6 +39,15 @@ Put these in `~/.local/lib`
         use Ansi qw(:DEFAULT);
         ```
 
+* [`.local/lib/python3.13/site-packages/ansi.py`](.local/lib/python/ansi.py) - a collections of ANSI codes for python scripts
+    - Include in your scripts by using these lines:
+        ```python
+        import sys
+        import os
+        sys.path.append(os.path.expanduser("~/.local/lib/python"))
+        from ansi import *
+        ```
+
 
 ## Scripts ##
 
