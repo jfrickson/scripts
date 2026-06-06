@@ -357,17 +357,23 @@ function sw
 
 	local sock="${DTACH_DIR}/${id}"
 	local pid_file="${DTACH_DIR}/.pid_${DTACH_SESSION:-}"
+	local client_pid
 
 	if [[ -z "${id}" ]]; then
 		printf "%sSpecify a session to switch to%s\n" "${_dy}" "${_rst}"
 		return
 	fi
 
-	local client_pid
-	client_pid=$(<"${pid_file}")
 	echo "${id}" > "${DTACH_DIR}/.next_session"
 	chmod g+w "${DTACH_DIR}/.next_session"
-	if ! detach_client "${DTACH_SESSION}" "${client_pid}"; then
+
+	if [[ -r "${pid_file}" ]]; then
+		client_pid=$(<"${pid_file}")
+	else
+		client_pid=""
+	fi
+
+	if [[ -z "${client_pid}" ]] || ! detach_client "${DTACH_SESSION}" "${client_pid}"; then
 		printf "%sCould not auto-detach. Press Ctrl+\\ to detach manually (switch is queued).%s\n" "${_dy}" "${_rst}"
 	fi
 }
@@ -393,10 +399,13 @@ function sd
 	fi
 
 	local pid_file="${DTACH_DIR}/.pid_${id:-}"
+	local client_pid=""
 
-	local client_pid
-	client_pid=$(<"${pid_file}")
-	if ! detach_client "${id}" "${client_pid}"; then
+	if [[ -r "${pid_file}" ]]; then
+		client_pid=$(<"${pid_file}")
+	fi
+
+	if [[ -z "${client_pid}" ]] || ! detach_client "${id}" "${client_pid}"; then
 		printf "%sCould not auto-detach. Press Ctrl+\\ to detach manually.%s\n" \
 				"${_dy}" "${_rst}"
 	fi
