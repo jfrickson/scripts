@@ -1,11 +1,11 @@
+# vim: set ft=bash ts=4 sw=4 sts=4 noet ai eol:
 # shellcheck disable=SC2086
 
 # =====================
 #  Reset, Clear, Home
 # =====================
 printf -v _rst '\e[0m'			# Reset to normal attributes
-#printf -v _cls '\e[2J\e[0;0H'	# Clear Screen & Home
-printf -v _cls=$'\e[H\e[J         # Home & clear to end of screen
+printf -v _cls=$'\e[H\e[J'      # Home & clear to end of screen
 printf -v _hom '\e[0;0H'		# Cursor to Home R0C0
 printf -v _el '\e[2K'			# Erase Line
 printf -v _scp '\e[s'			# Save cursor pos
@@ -78,8 +78,8 @@ printf -v _dur '\e[1;4;31m'			# Bold Underline Red
 printf -v _dug '\e[1;4;32m'			# Bold Underline Green
 printf -v _duy '\e[1;4;33m'			# Bold Underline Yellow
 printf -v _dub '\e[1;4;34m'			# Bold Underline Blue
-printf -v _dum '\e[1;4;35m'		    # Bold Underline Magenta
-printf -v _duc '\e[1;4;36m'		    # Bold Underline Cyan
+printf -v _dum '\e[1;4;35m'			# Bold Underline Magenta
+printf -v _duc '\e[1;4;36m'			# Bold Underline Cyan
 printf -v _duw '\e[1;4;37m'			# Bold Underline White
 
 _err=${_dwR}						# Errors
@@ -90,14 +90,14 @@ printf -v _wrn '\e[30;43m'			# Warnings
 # =====================
 
 if [[ "$1" == "256" ]]; then
-    for n in {16..255}; do
-        printf -v _fg256[${n}] "\e[38;5;%dm" "${n}"
-        printf -v _bg256[${n}] "\e[48;5;%dm" "${n}"
-        printf -v _fg256d[${n}] "\e[1;38;5;%dm" "${n}"
-        printf -v _bg256d[${n}] "\e[1;48;5;%dm" "${n}"
-        printf -v _fg256v[${n}] "\e[7;38;5;%dm" "${n}"
-        printf -v _bg256v[${n}] "\e[7;48;5;%dm" "${n}"
-        printf -v _fg256dv[${n}] "\e[1;7;38;5;%dm" "${n}"
-        printf -v _bg256dv[${n}] "\e[1;7;48;5;%dm" "${n}"
-    done
+	for n in {16..255}; do
+		printf -v _fg256[${n}] "\e[38;5;%dm" "${n}"
+		printf -v _bg256[${n}] "\e[48;5;%dm" "${n}"
+		printf -v _fg256d[${n}] "\e[1;38;5;%dm" "${n}"
+		printf -v _bg256d[${n}] "\e[1;48;5;%dm" "${n}"
+		printf -v _fg256v[${n}] "\e[7;38;5;%dm" "${n}"
+		printf -v _bg256v[${n}] "\e[7;48;5;%dm" "${n}"
+		printf -v _fg256dv[${n}] "\e[1;7;38;5;%dm" "${n}"
+		printf -v _bg256dv[${n}] "\e[1;7;48;5;%dm" "${n}"
+	done
 fi
