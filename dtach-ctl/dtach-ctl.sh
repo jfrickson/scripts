@@ -22,9 +22,9 @@ declare -A feed_keys=(
 	[^abc]='source abc-profile\n'
 )
 
-# ==================== Modify items above this line ====================
+# @@ ================== Modify items above this line ===================
 
-version="1.1.0"
+version="1.2.0"
 
 # Ansi color codes for output
 printf -v _rst	"\e[0m"				# Reset
@@ -35,6 +35,216 @@ printf -v _dg	"\e[1;32m"			# Bold Green
 printf -v _dc	"\e[1;36m"			# Bold Cyan
 printf -v _vdbW	"\e[1;7;37;44m"		# Dark Blue on White
 
+
+#======================================================================#
+# Utility functions
+#======================================================================#
+
+
+#----------------------------------------------------------------------
+# function usage:
+#	Print usage information for the script, including available
+#	commands and their descriptions. This function is called when the
+#	script is run without arguments or with the '-h' flag, providing
+#	users with a clear guide on how to use the script and what
+#	commands are available for managing dtach sessions.
+#----------------------------------------------------------------------
+function usage
+{
+	printf "\n%sDtach Control Script - Version %s%s\n" "${_dg}" "${version}" "${_rst}"
+	printf "%sUsage:%s\n" "${_d}" "${_rst}"
+	printf "   %sdtach-ctl.sh -h%s  Show this %sh%selp message\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %sdtach-ctl.sh -V%s  Show %sv%sersion information\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %sdtach-ctl.sh -i%s  %sI%snstall or upgrade\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ss  <id>%12s  attach to or create a %ss%session named %sid%s\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
+	printf "   %ssl%18s %ss%session %sl%sist\n" "${_dy}" "${_rst}" \
+			"${_d}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ssc%18s stale %ss%session %sc%slean up \n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ssk <id>%12s  %ss%session %sk%sill by %sid%s\n" "${_dy}" \
+			"${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
+	printf "   %ssw <id>%12s  %ssw%sitch session to %sid%s\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
+	printf "   %ssw +%12s     %ssw%sitch to next session\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ssw -%12s     %ssw%sitch to previous session\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %ssd%18s %sd%setach from current session\n" \
+			"${_dy}" "${_rst}" "${_d}" "${_rst}"
+	printf "   %sCtrl+\\%14s to detach from session (Dtach default)\n\n" \
+			"${_dy}" "${_rst}"
+	exit 0
+}
+
+#----------------------------------------------------------------------
+# function version:
+#	Print the version information for the script.
+#----------------------------------------------------------------------
+function version
+{
+	printf "\n%sDtach Control Script - Version %s%s\n\n" \
+			"${_dg}" "${version}" "${_rst}"
+	exit 0
+}
+
+function chk_install
+{
+	local old_ver old_path
+
+	old_path=$(command -v dtach-ctl.sh 2>/dev/null || true)
+
+	[[ ${cmd} = "dtach-ctl.sh" ]] || usage
+
+	if [[ -n "${old_path}" ]]; then
+ 		old_ver=$("${old_path}" -V 2>/dev/null)
+		old_ver=$([[ ${old_ver} =~ ([0-9]+\.[0-9]+\.[0-9]+) ]] && echo "${BASH_REMATCH[1]}")
+
+		if [[ "${old_ver}" == "${version}" ]]; then
+			printf "%sYou already have the latest version installed.%s\n\n" \
+					"${_dg}" "${_rst}"
+			exit 0
+		# If passing them in this order is NOT sorted, it means old_ver is greater than version
+		elif ! printf '%s\n%s\n' "${old_ver}" "${version}" | sort -V -C 2>/dev/null; then
+			printf "%sYou have a newer version installed. %s vs %s%s\n\n" \
+					"${_dr}" "${old_ver}" "${version}" "${_rst}"
+			exit 0
+		fi
+
+		printf "\n%sdtach-ctl.sh version %s is already installed at:%s\n  %s%s%s\n\n" \
+				"${_dy}" "${old_ver}" "${_rst}" "${_d}" "${old_path}" "${_rst}"
+		printf "%sDo you want to upgrade it to version %s? [y|N]%s " \
+				"${_dc}" "${version}" "${_rst}"
+		read -n 1 -rs answer
+		printf "\n\n"
+		if [[ "${answer}" =~ ^[Yy]$ ]]; then
+			upgrade "${old_path}"
+		fi
+
+		exit 0
+	fi
+
+	install
+}
+
+function install
+{
+	local script err dest_dir="${HOME}/bin"
+
+	script=$(realpath "$0")
+
+	printf "  %sEnter destination directory for installation:%s " \
+			"${_dc}" "${_rst}"
+	read -er -i "${dest_dir}" dest_dir
+
+	cp "${script}" "${dest_dir}/dtach-ctl.sh" || {
+		install_fail "Failed to copy the script to the destination " \
+		"directory.\nPlease check your permissions and try again."
+	}
+	cd "${dest_dir}" || {
+		err="Failed to access the destination directory after copying.\n"
+		err+="Please check your permissions and try again."
+		install_fail "${err}"
+	}
+	chmod +x "${dest_dir}/dtach-ctl.sh" || {
+		err="Failed to set execute permissions on the script in the "
+		err+="destination directory.\n"
+		err+="Please check your permissions and try again."
+		install_fail "${err}"
+	}
+
+	set_links "${dest_dir}"
+
+	printf "\n%sInstallation successful!%s\n\n" \
+			"${_dg}" "${_rst}"
+
+	exec "${dest_dir}/sl"
+}
+
+function upgrade
+{
+	local script err top old_path
+
+	script=$(realpath "$0")
+
+	old_path=$(dirname "$1")
+
+	cd "${old_path}" || {
+		err="Failed to access the existing installation directory.\n"
+		err+="Please check your permissions and try again."
+		install_fail "${err}"
+	}
+
+	top=$(grep -B999 "^# @@ " dtach-ctl.sh)
+	if [[ -z "${top}" ]]; then
+		err="Failed to find the upgrade marker in the existing script.\n"
+		err+="The existing installation may be corrupted or not a valid "
+		err+="dtach-ctl.sh script.\nPlease check the existing script at $1 "
+		err+="and try again."
+		install_fail "${err}"
+	fi
+
+	mv -f dtach-ctl.sh dtach-ctl.sh.bak || {
+		err="Failed to back up the existing script before upgrade.\n"
+		err+="Please check your permissions and try again."
+		install_fail "${err}"
+	}
+
+	echo "${top}" > dtach-ctl.sh || {
+		mv -f dtach-ctl.sh.bak dtach-ctl.sh
+		err="Failed to write the new script during upgrade.\n"
+		err+="Please check your permissions and try again."
+		install_fail "${err}"
+	}
+
+	grep -A999 "^# @@ " "${script}" | tail -n +2 >> dtach-ctl.sh || {
+		mv -f dtach-ctl.sh.bak dtach-ctl.sh
+		err="Failed to write the new script during upgrade.\n"
+		err+="Please check your permissions and try again."
+		install_fail "${err}"
+	}
+	chmod +x dtach-ctl.sh || {
+		mv -f dtach-ctl.sh.bak dtach-ctl.sh
+		err="Failed to set execute permissions on the new script after "
+		err+="upgrade.\nPlease check your permissions and try again."
+		install_fail "${err}"
+	}
+
+	set_links "${old_path}"
+
+	printf "\n%sUpgrade to version %s successful!\n" "${_dg}" "${version}"
+	printf "The old version has been backed up as\n"
+	printf "%s.bak%s\n\n" "${old_path}/dtach-ctl.sh" "${_rst}"
+	exit 0
+}
+
+function set_links
+{
+	local err link dest_dir="$1"
+	local -a links=("s" "sc" "sd" "sk" "sl" "sw")
+
+	for link in "${links[@]}"; do
+		ln -sf "${dest_dir}/dtach-ctl.sh" "${dest_dir}/${link}" || {
+			err="Failed to create symlink for command '${link}'.\n"
+			err+="Please check your permissions and try again."
+			install_fail "${err}"
+		}
+		if [[ ! -L "${dest_dir}/${link}" ]]; then
+			err="Failed to create symlink for command '${link}'.\n"
+			err+="Please check your permissions and try again."
+			install_fail "${err}"
+		fi
+	done
+}
+
+function install_fail
+{
+	printf "\n%sInstallation failed: %s%s\n\n" "${_dr}" "${1}" "${_rst}"
+	exit 1
+}
 
 #----------------------------------------------------------------------
 # function check_dtach:
@@ -71,7 +281,7 @@ function check_dtach
 		[[ -L "${script_path}" ]] && script_path=$(readlink -f "${script_path}")
 
 		# Update this script here with the new value
-		sed -r -i.bak "s|/home/\s*<YOUR_USERNAME>\s*|${HOME}|g" "$script_path"
+		sed -r -i.bak "s|/home/\s*<YOUR_USERNAME>\s*|${HOME}|g" "${script_path}"
 
 		printf "\n    %sDTACH_DIR has been updated.%s\n\n" "${_dg}" "${_rst}"
 		printf "    %sDo you want to check if your ~/.bashrc has the\n" "${_dc}"
@@ -81,8 +291,7 @@ function check_dtach
 		if [[ "${answer}" =~ ^[Yy]$ ]]; then
 			if [[ -f "${HOME}/.bashrc" ]]; then
 				# Check if .bashrc already has the changes
-				grep -q "DTACH_SESSION" "${HOME}/.bashrc"
-				if [[ $? -ne 0 ]]; then
+				grep -q "DTACH_SESSION" "${HOME}/.bashrc" || {
 					# Update .bashrc with PS1 change and completion for dtach sessions
 					cp -a "${HOME}/.bashrc" "${HOME}/.bashrc.bak"
 					echo -e "\n# Added by dtach-ctl.sh for session tracking" \
@@ -93,7 +302,7 @@ function check_dtach
 					echo 'fi' >> "${HOME}/.bashrc"
 					echo "complete -W $(ls -1 -I \".*\" ${HOME}/.dtach 2>/dev/null) s sk sw" \
 						>> "${HOME}/.bashrc"
-				fi
+				}
 
 				printf "\n    %sYour ~/.bashrc has been updated (backup created as ~/.bashrc.bak).%s\n" \
 					"${_dg}" "${_rst}"
@@ -107,7 +316,7 @@ function check_dtach
 		printf "\n    %sDTACH_DIR has been updated. Rerunning the script now...%s" \
 			"${_dg}" "${_rst}"
 		sleep 2
-		exec "$0" "$cmd"
+		exec "$0" "${cmd}"
 	fi
 
 	[[ -n "${answer}" ]] && echo
@@ -132,61 +341,6 @@ function check_directory
 	fi
 }
 
-#----------------------------------------------------------------------
-# function sk:
-#	Kill a session by ID, ensuring the socket is cleaned up. This is
-#	a more forceful alternative to detaching, useful if the session is
-#	unresponsive or you want to ensure it's terminated.
-#----------------------------------------------------------------------
-function sk
-{
-	local sock="" id=""
-
-	if [[ -z "$1" ]]; then
-		printf "\n%sSpecify a session id to kill%s\n" "${_dr}" "${_rst}"
-		return
-	fi
-
-	while [[ -n "$1" ]]; do
-		id="$1"
-		shift
-		sock="${DTACH_DIR}/${id}"
-
-		if [[ ! -S "${sock}" ]]; then
-			printf "%sSession '${id}' not found.%s\n" "${_dr}" "${_rst}"
-		else
-			# Find the PID of the process holding the socket open
-			local pid
-			pid=$(fuser "${sock}" 2>/dev/null | awk '{print $NF}')
-			if [[ -n "${pid}" ]]; then
-				printf "%sKilling session '${id}' (PID: ${pid})...%s\n" "${_dr}" "${_rst}"
-				kill -9 "${pid}"
-				rm "${sock}"
-			else
-				printf "%sNo active process found for '${id}'. Cleaning up socket.%s\n" "${_dy}" "${_rst}"
-				rm "${sock}"
-			fi
-		fi
-	done
-}
-
-#----------------------------------------------------------------------
-# function sc:
-#	Clean up stale session sockets. This checks for sockets in the
-#	DTACH_DIR that are not currently active (i.e. no process is
-#	holding them open) and removes them. This is useful to keep the
-#	session list clean and avoid confusion with defunct sessions.
-#----------------------------------------------------------------------
-function sc {
-	if [[ -O "${DTACH_DIR}" ]]; then
-		for sock in "${DTACH_DIR}"/*; do
-			if [[ -S "${sock}" ]] && ! dtach -p "${sock}" < /dev/null > /dev/null 2>&1; then
-				rm -f "${sock}"
-			fi
-		done
-	fi
-}
-
 function get_sessions
 {
 	local path
@@ -194,6 +348,155 @@ function get_sessions
 		[[ -e "${path}" ]] || continue
 		basename "${path}"
 	done | sort
+}
+
+#----------------------------------------------------------------------
+# function attach_with_tracking:
+#	Called by function `s`
+#	Helper function to attach to a dtach session while also setting up
+#	tracking files for the session. This allows the script to manage
+#	detach requests and session switching across different UIDs, by
+#	creating PID files and request files in the DTACH_DIR. The
+#	function spawns a background watcher process that listens for
+#	detach requests and signals to clean up the tracking files when
+#	the session ends.
+#----------------------------------------------------------------------
+function attach_with_tracking
+{
+	local id="$1"
+	local sock="$2"
+	local pid_file="${DTACH_DIR}/.pid_${id}"
+	local req_file="${DTACH_DIR}/.detach_req_${id}"
+	local watcher_pid
+
+	rm -f "${pid_file}" "${req_file}"
+
+	# Owner-side watcher: handles detach requests from shells running as other UIDs.
+	(
+		# Wait briefly for attach process to publish PID, otherwise exit.
+		for _ in {1..20}; do
+			[[ -f "${pid_file}" ]] && break
+			sleep 0.1
+		done
+
+		while [[ -f "${pid_file}" ]]; do
+			if [[ -f "${req_file}" ]]; then
+				rm -f "${req_file}"
+				if [[ -f "${pid_file}" ]]; then
+					client_pid=""
+					client_pid=$(<"${pid_file}")
+					kill -HUP "${client_pid}" 2>/dev/null || true
+				fi
+			fi
+			sleep 0.2
+		done
+	) &
+	watcher_pid=$!
+
+	bash -c "echo \$\$ > \"${pid_file}\"; exec dtach -a \"${sock}\" -z"
+
+	kill "${watcher_pid}" 2>/dev/null || true
+	rm -f "${pid_file}" "${req_file}"
+}
+
+#----------------------------------------------------------------------
+# function detach_client:
+#   Called by function `sw`
+#	Attempt to detach a client by sending it a HUP signal. If the
+#	client is running under a different UID and cannot be signaled,
+#	this function falls back to creating a detach request file that
+#	the owner-side watcher will detect and handle. This allows for
+#	cross-UID detach requests, albeit with a slight delay as the
+#	watcher process checks for requests.
+#----------------------------------------------------------------------
+function detach_client
+{
+	local id="$1"
+	local client_pid="$2"
+	local req_file="${DTACH_DIR}/.detach_req_${id}"
+
+	if kill -HUP "${client_pid}" 2>/dev/null; then
+		return 0
+	fi
+
+	# Cross-UID fallback: request detach from the owner-side watcher.
+	if : > "${req_file}" 2>/dev/null; then
+		return 0
+	fi
+
+	return 1
+}
+
+
+#======================================================================#
+# Command functions
+#======================================================================#
+
+
+#----------------------------------------------------------------------
+# function s:
+#	Attach to a session by ID, or create it if it doesn't exist.
+#	This function handles the logic of checking if the session already
+#	exists, creating it if necessary, and then attaching to it. It
+#	also sets up the environment for the session based on predefined
+#	keys, and manages the tracking of the attached session for
+#	switching purposes.
+#----------------------------------------------------------------------
+function s
+{
+	local id="$1"
+	local sock="${DTACH_DIR}/${id}"
+	local item keys
+	local -a feed_key_order
+	local script
+
+	script=$(realpath "$0")
+
+	if [[ -z "$1" ]]; then
+		printf "\n%sYou must specify a session id%s\n" "${_dr}" "${_rst}"
+		return
+	fi
+
+	# Build ordered keys from this script's feed_keys declaration
+	mapfile -t feed_key_order < <(
+		awk '
+			$0 ~ /^declare -A feed_keys=\(/ { in_block=1; next }
+			in_block && $0 ~ /^\)/ { in_block=0; exit }
+			in_block {
+				if (match($0, /^[[:space:]]*\[([^]]+)\]=/, m)) print m[1]
+			}
+		' "${script}"
+	)
+
+	for item in "${feed_key_order[@]}"; do
+		if [[ "${id}" =~ ${item} ]]; then
+			keys="${feed_keys[${item}]}"
+			break
+		fi
+	done
+
+	if [[ -n "${DTACH_SESSION}" ]]; then
+		sw "${id}"
+		return
+	elif [[ -S "${sock}" ]]; then
+		attach_with_tracking "${id}" "${sock}"
+	elif [[ -n "${keys}" ]]; then
+		env DTACH_SESSION="${id}" dtach -n "${sock}" -z bash
+		echo -en "${keys}" | dtach -p "${sock}"
+		attach_with_tracking "${id}" "${sock}"
+	else
+		env DTACH_SESSION="${id}" dtach -n "${sock}" -z bash
+		attach_with_tracking "${id}" "${sock}"
+	fi
+
+	if [[ -f "${DTACH_DIR}/.next_session" ]]; then
+		local next
+		next=$(<"${DTACH_DIR}/.next_session")
+		rm "${DTACH_DIR}/.next_session"
+		if [[ -n "${next}" ]]; then
+			s "${next}"
+		fi
+	fi
 }
 
 #----------------------------------------------------------------------
@@ -230,69 +533,6 @@ function sl
 		fi
 	done
     printf "\n\n"
-}
-
-#----------------------------------------------------------------------
-# function s:
-#	Attach to a session by ID, or create it if it doesn't exist.
-#	This function handles the logic of checking if the session already
-#	exists, creating it if necessary, and then attaching to it. It
-#	also sets up the environment for the session based on predefined
-#	keys, and manages the tracking of the attached session for
-#	switching purposes.
-#----------------------------------------------------------------------
-function s
-{
-	local id="$1"
-	local sock="${DTACH_DIR}/${id}"
-	local item keys
-	local -a feed_key_order
-
-	if [[ -z "$1" ]]; then
-		printf "\n%sYou must specify a session id%s\n" "${_dr}" "${_rst}"
-		return
-	fi
-
-	# Build ordered keys from this script's feed_keys declaration
-	mapfile -t feed_key_order < <(
-		awk '
-			$0 ~ /^declare -A feed_keys=\(/ { in_block=1; next }
-			in_block && $0 ~ /^\)/ { in_block=0; exit }
-			in_block {
-				if (match($0, /^[[:space:]]*\[([^]]+)\]=/, m)) print m[1]
-			}
-		' "${BASH_SOURCE[0]}"
-	)
-
-	for item in "${feed_key_order[@]}"; do
-		if [[ "${id}" =~ ${item} ]]; then
-			keys="${feed_keys[${item}]}"
-			break
-		fi
-	done
-
-	if [[ -n "${DTACH_SESSION}" ]]; then
-		sw "$id"
-		return
-	elif [[ -S "${sock}" ]]; then
-		attach_with_tracking "${id}" "${sock}"
-	elif [[ -n "${keys}" ]]; then
-		env DTACH_SESSION="${id}" dtach -n "${sock}" -z bash
-		echo -en "${keys}" | dtach -p "${sock}"
-		attach_with_tracking "${id}" "${sock}"
-	else
-		env DTACH_SESSION="${id}" dtach -n "${sock}" -z bash
-		attach_with_tracking "${id}" "${sock}"
-	fi
-
-	if [[ -f "${DTACH_DIR}/.next_session" ]]; then
-		local next
-		next=$(<"${DTACH_DIR}/.next_session")
-		rm "${DTACH_DIR}/.next_session"
-		if [[ -n "${next}" ]]; then
-			s "${next}"
-		fi
-	fi
 }
 
 #----------------------------------------------------------------------
@@ -412,134 +652,82 @@ function sd
 }
 
 #----------------------------------------------------------------------
-# function attach_with_tracking:
-#	Called by function `s`
-#	Helper function to attach to a dtach session while also setting up
-#	tracking files for the session. This allows the script to manage
-#	detach requests and session switching across different UIDs, by
-#	creating PID files and request files in the DTACH_DIR. The
-#	function spawns a background watcher process that listens for
-#	detach requests and signals to clean up the tracking files when
-#	the session ends.
+# function sk:
+#	Kill a session by ID, ensuring the socket is cleaned up. This is
+#	a more forceful alternative to detaching, useful if the session is
+#	unresponsive or you want to ensure it's terminated.
 #----------------------------------------------------------------------
-function attach_with_tracking
+function sk
 {
-	local id="$1"
-	local sock="$2"
-	local pid_file="${DTACH_DIR}/.pid_${id}"
-	local req_file="${DTACH_DIR}/.detach_req_${id}"
-	local watcher_pid
+	local sock="" id=""
 
-	rm -f "${pid_file}" "${req_file}"
+	if [[ -z "$1" ]]; then
+		printf "\n%sSpecify a session id to kill%s\n" "${_dr}" "${_rst}"
+		return
+	fi
 
-	# Owner-side watcher: handles detach requests from shells running as other UIDs.
-	(
-		# Wait briefly for attach process to publish PID, otherwise exit.
-		for _ in {1..20}; do
-			[[ -f "${pid_file}" ]] && break
-			sleep 0.1
-		done
+	while [[ -n "$1" ]]; do
+		id="$1"
+		shift
+		sock="${DTACH_DIR}/${id}"
 
-		while [[ -f "${pid_file}" ]]; do
-			if [[ -f "${req_file}" ]]; then
-				rm -f "${req_file}"
-				if [[ -f "${pid_file}" ]]; then
-					client_pid=""
-					client_pid=$(<"${pid_file}")
-					kill -HUP "${client_pid}" 2>/dev/null || true
-				fi
+		if [[ ! -S "${sock}" ]]; then
+			printf "%sSession '${id}' not found.%s\n" "${_dr}" "${_rst}"
+		else
+			# Find the PID of the process holding the socket open
+			local pid
+			pid=$(fuser "${sock}" 2>/dev/null | awk '{print $NF}')
+			if [[ -n "${pid}" ]]; then
+				printf "%sKilling session '${id}' (PID: ${pid})...%s\n" "${_dr}" "${_rst}"
+				kill -9 "${pid}"
+				rm "${sock}"
+			else
+				printf "%sNo active process found for '${id}'. Cleaning up socket.%s\n" "${_dy}" "${_rst}"
+				rm "${sock}"
 			fi
-			sleep 0.2
+		fi
+	done
+}
+
+#----------------------------------------------------------------------
+# function sc:
+#	Clean up stale session sockets. This checks for sockets in the
+#	DTACH_DIR that are not currently active (i.e. no process is
+#	holding them open) and removes them. This is useful to keep the
+#	session list clean and avoid confusion with defunct sessions.
+#----------------------------------------------------------------------
+function sc {
+	if [[ -O "${DTACH_DIR}" ]]; then
+		for sock in "${DTACH_DIR}"/*; do
+			if [[ -S "${sock}" ]] && ! dtach -p "${sock}" < /dev/null > /dev/null 2>&1; then
+				rm -f "${sock}"
+			fi
 		done
-	) &
-	watcher_pid=$!
-
-	bash -c "echo \$\$ > \"${pid_file}\"; exec dtach -a \"${sock}\" -z"
-
-	kill "${watcher_pid}" 2>/dev/null || true
-	rm -f "${pid_file}" "${req_file}"
-}
-
-#----------------------------------------------------------------------
-# function detach_client:
-#   Called by function `sw`
-#	Attempt to detach a client by sending it a HUP signal. If the
-#	client is running under a different UID and cannot be signaled,
-#	this function falls back to creating a detach request file that
-#	the owner-side watcher will detect and handle. This allows for
-#	cross-UID detach requests, albeit with a slight delay as the
-#	watcher process checks for requests.
-#----------------------------------------------------------------------
-function detach_client
-{
-	local id="$1"
-	local client_pid="$2"
-	local req_file="${DTACH_DIR}/.detach_req_${id}"
-
-	if kill -HUP "${client_pid}" 2>/dev/null; then
-		return 0
 	fi
-
-	# Cross-UID fallback: request detach from the owner-side watcher.
-	if : > "${req_file}" 2>/dev/null; then
-		return 0
-	fi
-
-	return 1
 }
 
-#----------------------------------------------------------------------
-# function usage:
-#	Print usage information for the script, including available
-#	commands and their descriptions. This function is called when the
-#	script is run without arguments or with the '-h' flag, providing
-#	users with a clear guide on how to use the script and what
-#	commands are available for managing dtach sessions.
-#----------------------------------------------------------------------
-function usage
-{
-	printf "\n%sDtach Control Script - Version %s%s\n" "${_dg}" "${version}" "${_rst}"
-	printf "%sUsage:%s\n" "${_d}" "${_rst}"
-	printf "   %ssl%s       %ss%session %sl%sist\n" "${_dy}" "${_rst}" \
-			"${_d}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %ss  <id>%s  attach to or create a %ss%session named %sid%s\n" \
-			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
-	printf "   %ssc%s       stale %ss%session %sc%slean up \n" \
-			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %ssk <id>%s  %ss%session %sk%sill by %sid%s\n" "${_dy}" \
-			"${_rst}" "${_d}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
-	printf "   %ssw <id>%s  %ssw%sitch session to %sid%s\n" \
-			"${_dy}" "${_rst}" "${_d}" "${_rst}" "${_dy}" "${_rst}"
-	printf "   %ssw +%s     %ssw%sitch to next session\n" \
-			"${_dy}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %ssw -%s     %ssw%sitch to previous session\n" \
-			"${_dy}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %ssd%s       %sd%setach from current session\n" \
-			"${_dy}" "${_rst}" "${_d}" "${_rst}"
-	printf "   %sCtrl+\\%s   to detach from session (Dtach default)\n\n" \
-			"${_dy}" "${_rst}"
-	exit 0
-}
 
-#----------------------------------------------------------------------
+
+#======================================================================#
 # Main command dispatch. This checks the name of the script or the
 # first argument to determine which function to call. If the script is
 # called without arguments or with '-h', it prints the usage
 # information. Otherwise, it calls the corresponding function based on
-# the command (e.g. 'sl' for listing sessions, 'sc' for cleaning stale
-# sessions, 's' for attaching/creating a session, 'sk' for killing a
-# session, 'sw' for switching sessions).
-#----------------------------------------------------------------------
+# the arguments, or the command (e.g. 'sl' for listing sessions, 'sc'
+# for cleaning stale sessions, 's' for attaching/creating a session,
+# 'sk' for killing a session, 'sw' for switching sessions.
+#======================================================================#
 
-cmd=$(basename "$0")
+cmd=$(basename "$0")					# What name are we invoked as?
 
-if [[ "$1" = "-V" || "$1" = "--version" ]]; then
-	printf "%sDtach Control Script - Version %s%s\n" "${_dg}" \
-			"${version}" "${_rst}"
-	exit 0
-elif [[ "${cmd}" = "dtach-ctl.sh" ]]; then
-	usage
-elif [[ "$1" = "-h" || "$1" = "-help" || "$1" = "--help" ]]; then
+case "$1" in							# Check comand line arguments
+	-h|-help|--help)  usage ;;			# Help
+	-V|--version)     version ;;		# Version
+	-i|--install)     chk_install ;;	# Install/Upgrade
+	*)	;;
+esac
+
+if [[ "${cmd}" = "dtach-ctl.sh" ]]; then
 	usage
 fi
 
