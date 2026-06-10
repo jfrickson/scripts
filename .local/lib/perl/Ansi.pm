@@ -16,7 +16,7 @@ our @EXPORT = qw(
 #  Reset, Clear, Home
 # =====================
 our $_rst = "\e[0m";			# Reset to normal attributes
-our $_cls = "\e[2J\e[0;0H";		# Clear Screen & Home
+our $_cls = "\e[H\e[J";		# Clear Screen & Home
 our $_hom = "\e[0;0H";			# Cursor to Home R0C0
 our $_el = "\e[2K";				# Erase Line
 our $_scp = "\e[s";				# Save cursor pos
