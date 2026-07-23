@@ -1,0 +1,209 @@
+#======================================================================
+# Function: read_key_raw
+#
+# Description:
+#	Reads a single key from the keyboard. Handles function keys,
+#	cursor keys, etc.
+#
+# Parameters:
+#	variable	Required - variable name to assign the value to
+#	parms		Optional, defaults to "-r -n1 -d ''"
+#
+# Returns:
+#	The key or key sequence in the specified variable.
+#	If a timeout was specified and expires, the return is '#TIMEOUT'.
+#	Some special keys are returned as custom literals. For example:
+#		#BS, #ESC, #LF, #TAB, #F1, #UP, #PUP, #HOM
+#	Control keys are returned as #C-X
+#
+# Usage:
+#	* Put at the top of your script:
+#		bash-------------------------------------+
+#       | PATH="${HOME}/.local/lib/bash:${PATH}" |
+#       | . ReadKeyRaw                           |
+#		+----------------------------------------+
+#	* Somewhere in your script:
+#		bash-------------------------------------+
+#       | read_key_raw resp "-r -d '' -n1 -t1"   |
+#       | echo "You pressed ${resp}"             |
+#		+----------------------------------------+
+#
+#
+#======================================================================
+function read_key_raw()
+{
+	if [[ -z "$1" ]]; then
+		REPLY="#ERROR"
+		return
+	fi
+
+	local -n out=$1
+	local parms="${2:--r -n1 -d ''}" restore next ctrl tmp
+	local prev_return prev_int prev_term
+
+    if [[ -z "$READ_KEY_RAW_BASELINE_STTY" && -t 0 ]]; then
+        READ_KEY_RAW_BASELINE_STTY=$(stty -g)
+    fi
+    restore="$READ_KEY_RAW_BASELINE_STTY"
+
+	# Set traps
+	prev_return=$(trap -p RETURN)
+	prev_int=$(trap -p INT)
+	prev_term=$(trap -p TERM)
+
+	# Helper function to safely unwind traps and restore terminal
+	_rk_cleanup() {
+		stty "$restore"
+
+		# Restore original signal traps
+		if [[ -n "$prev_return" ]]; then eval "$prev_return"; else trap - RETURN; fi
+		if [[ -n "$prev_int" ]];    then eval "$prev_int";    else trap - INT;    fi
+		if [[ -n "$prev_term" ]];   then eval "$prev_term";   else trap - TERM;   fi
+	}
+
+	trap '_rk_cleanup; kill -s INT $$' INT
+	trap '_rk_cleanup; kill -s TERM $$' TERM
+	trap '_rk_cleanup' RETURN
+
+	# Put terminal in raw mode: no echo, no canonical processing
+	stty -echo -icanon time 0 min 1
+	if ! read ${parms}; then
+		out="#TIMEOUT"
+		return
+	fi
+
+#printf "reply:%02x " "'$REPLY"		# Debugging
+
+	case "${REPLY}" in
+		$'\x08'|$'\x7f') tmp="#BS" ;;
+		$'\n') tmp="#LF" ;;
+		$'\t') tmp="#TAB" ;;
+
+		$'\e') # ESC or ESC-sequence?
+			if read -r -n1 -t 0.02 next; then
+#printf "next1:%02x " "'$next"		# Debugging
+				tmp="$next"
+				while read -r -n1 -t 0.02 next; do
+#printf "next2:%02x " "'$next"		# Debugging
+					if [[ "$next" = $'\e' ]]; then
+						# Another ESC sequence started — drain and discard it
+						while read -r -n1 -t 0.01 next; do :; done
+						break
+					fi
+					tmp+="$next"
+				done
+#printf "tmp:$tmp "		# Debugging
+				xlate_esc tmp
+			else
+				tmp="#ESC"
+			fi
+			;;
+
+		*) # Check for UTF-8 and CTRL keys
+			# UTF-8 multi-byte sequence?
+			printf -v first "%d" "'$REPLY"
+			if (( first >= 0xC2 && first <= 0xF4 )); then
+				tmp="$REPLY"
+				# Determine expected length
+				if (( first <= 0xDF )); then expected=1
+				elif (( first <= 0xEF )); then expected=2
+				else expected=3
+				fi
+				for ((i=0; i<expected; i++)); do
+					if read -r -n1 -t 0.01 next; then
+						tmp+="$next"
+					fi
+				done
+				out="$tmp"
+				return
+			fi
+
+			# Control key?
+			printf -v ctrl "%d" "'$REPLY"
+			if [[ $ctrl -gt 0 && $ctrl -le 26 ]]; then
+				printf -v tmp '%03o' "$((ctrl + 64))"
+				printf -v tmp "#C-%b" "\\$tmp"
+			else
+				tmp="$REPLY"
+			fi
+			;;
+	esac
+	out="${tmp}"
+}
+
+#======================================================================
+# Function: xlate_esc
+#	Translate escape sequences to readable key names
+#	Do not call this function directly; it is called by read_key_raw.
+#======================================================================
+function xlate_esc()
+{
+	local -n val=$1
+
+#printf "xlate:$val "		# Debugging
+	case "$val" in
+		# Function keys
+		"OP")     val="#f1" ;;		"OQ")     val="#f2" ;;		"OR")     val="#f3" ;;
+		"OS")     val="#f4" ;;		"[15~")   val="#f5" ;;		"[17~")   val="#f6" ;;
+		"[18~")   val="#f7" ;;		"[19~")   val="#f8" ;;		"[20~")   val="#f9" ;;
+		"[21~")   val="#f10" ;;		"[23~")   val="#f11" ;;		"[24~")   val="#f12" ;;
+		# Shifted function keys
+		"[1;2P")  val="#F1" ;;		"[1;2Q")  val="#F2" ;;		"[1;2R")  val="#F3" ;;
+		"[1;2S")  val="#F4" ;;		"[15;2~") val="#F5" ;;		"[17;2~") val="#F6" ;;
+		"[18;2~") val="#F7" ;;		"[19;2~") val="#F8" ;;		"[20;2~") val="#F9" ;;
+		"[21;2~") val="#F10" ;;		"[23;2~") val="#F11" ;;		"[24;2~") val="#F12" ;;
+		# Control function keys
+		"[1;5P")  val="#C-f1" ;;	"[1;5Q")  val="#C-f2"  ;;	"[1;5R")  val="#C-f3" ;;
+		"[1;5S")  val="#C-f4" ;;	"[15;5~") val="#C-f5" ;;	"[17;5~") val="#C-f6" ;;
+		"[18;5~") val="#C-f7" ;;	"[19;5~") val="#C-f8" ;;	"[20;5~") val="#C-f9" ;;
+		"[21;5~") val="#C-f10" ;;	"[23;5~") val="#C-f11" ;;	"[24;5~") val="#C-f12" ;;
+		# Control+Shift function keys
+		"[1;6P")  val="#C-F1" ;;	"[1;6Q")  val="#C-F2"  ;;	"[1;6R")  val="#C-F3" ;;
+		"[1;6S")  val="#C-F4" ;;	"[15;6~") val="#C-F5" ;;	"[17;6~") val="#C-F6" ;;
+		"[18;6~") val="#C-F7" ;;	"[19;6~") val="#C-F8" ;;	"[20;6~") val="#C-F9" ;;
+		"[21;6~") val="#C-F10" ;;	"[23;6~") val="#C-F11" ;;	"[24;6~") val="#C-F12" ;;
+		# Alt function keys
+		"[1;3P")  val="#A-f1" ;;	"[1;3Q")  val="#A-f2"  ;;	"[1;3R")  val="#A-f3" ;;
+		"[1;3S")  val="#A-f4" ;;	"[15;3~") val="#A-f5" ;;	"[17;3~") val="#A-f6" ;;
+		"[18;3~") val="#A-f7" ;;	"[19;3~") val="#A-f8" ;;	"[20;3~") val="#A-f9" ;;
+		"[21;3~") val="#A-f10" ;;	"[23;3~") val="#A-f11" ;;	"[24;3~") val="#A-f12" ;;
+		# Alt+Shift function keys
+		"[1;4P")  val="#A-F1" ;;	"[1;4Q")  val="#A-F2"  ;;	"[1;4R")  val="#A-F3" ;;
+		"[1;4S")  val="#A-F4" ;;	"[15;4~") val="#A-F5" ;;	"[17;4~") val="#A-F6" ;;
+		"[18;4~") val="#A-F7" ;;	"[19;4~") val="#A-F8" ;;	"[20;4~") val="#A-F9" ;;
+		"[21;4~") val="#A-F10" ;;	"[23;4~") val="#A-F11" ;;	"[24;4~") val="#A-F12" ;;
+		# Alt+Control function keys
+		"[1;7P")  val="#AC-f1" ;;	"[1;7Q")  val="#AC-f2"  ;;	"[1;7R")  val="#AC-f3" ;;
+		"[1;7S")  val="#AC-f4" ;;	"[15;7~") val="#AC-f5" ;;	"[17;7~") val="#AC-f6" ;;
+		"[18;7~") val="#AC-f7" ;;	"[19;7~") val="#AC-f8" ;;	"[20;7~") val="#AC-f9" ;;
+		"[21;7~") val="#AC-f10" ;;	"[23;7~") val="#AC-f11" ;;	"[24;7~") val="#AC-f12" ;;
+		# Alt+Control+Shift function keys
+		"[1;8P")  val="#AC-F1" ;;	"[1;8Q")  val="#AC-F2"  ;;	"[1;8R")  val="#AC-F3" ;;
+		"[1;8S")  val="#AC-F4" ;;	"[15;8~") val="#AC-F5" ;;	"[17;8~") val="#AC-F6" ;;
+		"[18;8~") val="#AC-F7" ;;	"[19;8~") val="#AC-F8" ;;	"[20;8~") val="#AC-F9" ;;
+		"[21;8~") val="#AC-F10" ;;	"[23;8~") val="#AC-F11" ;;	"[24;8~") val="#AC-F12" ;;
+		# Cursor keys
+		"[A")     val="#UP" ;;		"[B")     val="#DN" ;;		"[C")     val="#RT" ;;
+		"[D")     val="#LT" ;;		"[H")     val="#HOM" ;;		"[F")     val="#END" ;;
+		"[2~")    val="#INS" ;;		"[3~")    val="#DEL" ;;		"[5~")    val="#PUP" ;;
+		"[6~")    val="#PDN" ;;
+		# macOS differences
+		"OH")    val="#HOM" ;;		"OF")    val="#END" ;;
+		# Alt cursor keys
+		"[1;3A")  val="#A-UP" ;;	"[1;3B")  val="#A-DN" ;;	"[1;3C")  val="#A-RT" ;;
+		"[1;3D")  val="#A-LT" ;;	"[1;3H")  val="#A-HOM" ;;	"[1;3F")  val="#A-END" ;;
+		"[2;3~")  val="#A-INS" ;;	"[3;3~")  val="#A-DEL" ;;	"[5;3~")  val="#A-PUP" ;;
+		"[6;3~")  val="#A-PDN" ;;
+		# Control cursor keys
+		"[1;5A")  val="#C-UP" ;;	"[1;5B")  val="#C-DN" ;;	"[1;5C")  val="#C-RT" ;;
+		"[1;5D")  val="#C-LT" ;;	"[1;5H")  val="#C-HOM" ;;	"[1;5F")  val="#C-END" ;;
+		"[2;5~")  val="#C-INS" ;;	"[3;5~")  val="#C-DEL" ;;	"[5;5~")  val="#C-PUP" ;;
+		"[6;5~")  val="#C-PDN" ;;
+		# Alt+<key> sequences
+		[!-~])    val="#A-$val" ;;
+	esac
+#printf "xlate:$val "		# Debugging
+}
+
+# Global variable to hold baseline - Don't touch!
+READ_KEY_RAW_BASELINE_STTY=""
