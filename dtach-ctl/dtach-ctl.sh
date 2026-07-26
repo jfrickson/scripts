@@ -145,14 +145,14 @@ function install
 		"directory.\nPlease check your permissions and try again."
 	}
 	cd "${dest_dir}" || {
-		err="Failed to access the destination directory after copying.\n"
-		err+="Please check your permissions and try again."
+		err=$'Failed to access the destination directory after copying.\n'
+		err+=$'Please check your permissions and try again.'
 		install_fail "${err}"
 	}
 	chmod +x "${dest_dir}/dtach-ctl.sh" || {
-		err="Failed to set execute permissions on the script in the "
-		err+="destination directory.\n"
-		err+="Please check your permissions and try again."
+		err=$'Failed to set execute permissions on the script in the '
+		err+=$'destination directory.\n'
+		err+=$'Please check your permissions and try again.'
 		install_fail "${err}"
 	}
 
@@ -173,43 +173,43 @@ function upgrade
 	old_path=$(dirname "$1")
 
 	cd "${old_path}" || {
-		err="Failed to access the existing installation directory.\n"
-		err+="Please check your permissions and try again."
+		err=$'Failed to access the existing installation directory.\n'
+		err+=$'Please check your permissions and try again.'
 		install_fail "${err}"
 	}
 
 	top=$(grep -B999 "^# @@ " dtach-ctl.sh)
 	if [[ -z "${top}" ]]; then
-		err="Failed to find the upgrade marker in the existing script.\n"
-		err+="The existing installation may be corrupted or not a valid "
-		err+="dtach-ctl.sh script.\nPlease check the existing script at $1 "
-		err+="and try again."
+		err=$'Failed to find the upgrade marker in the existing script.\n'
+		err+=$'The existing installation may be corrupted or not a valid '
+		err+=$'dtach-ctl.sh script.\nPlease check the existing script at $1 '
+		err+=$'and try again.'
 		install_fail "${err}"
 	fi
 
 	mv -f dtach-ctl.sh dtach-ctl.sh.bak || {
-		err="Failed to back up the existing script before upgrade.\n"
-		err+="Please check your permissions and try again."
+		err=$'Failed to back up the existing script before upgrade.\n'
+		err+=$'Please check your permissions and try again.'
 		install_fail "${err}"
 	}
 
 	echo "${top}" > dtach-ctl.sh || {
 		mv -f dtach-ctl.sh.bak dtach-ctl.sh
-		err="Failed to write the new script during upgrade.\n"
-		err+="Please check your permissions and try again."
+		err=$'Failed to write the new script during upgrade.\n'
+		err+=$'Please check your permissions and try again.'
 		install_fail "${err}"
 	}
 
 	grep -A999 "^# @@ " "${script}" | tail -n +2 >> dtach-ctl.sh || {
 		mv -f dtach-ctl.sh.bak dtach-ctl.sh
-		err="Failed to write the new script during upgrade.\n"
-		err+="Please check your permissions and try again."
+		err=$'Failed to write the new script during upgrade.\n'
+		err+=$'Please check your permissions and try again.'
 		install_fail "${err}"
 	}
 	chmod +x dtach-ctl.sh || {
 		mv -f dtach-ctl.sh.bak dtach-ctl.sh
-		err="Failed to set execute permissions on the new script after "
-		err+="upgrade.\nPlease check your permissions and try again."
+		err=$'Failed to set execute permissions on the new script after '
+		err+=$'upgrade.\nPlease check your permissions and try again.'
 		install_fail "${err}"
 	}
 
@@ -228,13 +228,13 @@ function set_links
 
 	for link in "${links[@]}"; do
 		ln -sf "${dest_dir}/dtach-ctl.sh" "${dest_dir}/${link}" || {
-			err="Failed to create symlink for command '${link}'.\n"
-			err+="Please check your permissions and try again."
+			err=$'Failed to create symlink for command '\''${link}'\''.\n'
+			err+=$'Please check your permissions and try again.'
 			install_fail "${err}"
 		}
 		if [[ ! -L "${dest_dir}/${link}" ]]; then
-			err="Failed to create symlink for command '${link}'.\n"
-			err+="Please check your permissions and try again."
+			err=$'Failed to create symlink for command '\''${link}'\''.\n'
+			err+=$'Please check your permissions and try again.'
 			install_fail "${err}"
 		fi
 	done
