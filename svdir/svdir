@@ -200,8 +200,9 @@ function long_usage()
 #----------------------------------------------------------------------
 function check_aliases()
 {
-	local -a als entry append_file="${HOME}/.bashrc"
-	local -A aliases script="${BASH_SOURCE[0]}"
+	local -a als
+	local -A aliases
+	local entry append_file="${HOME}/.bashrc" script="${BASH_SOURCE[0]}"
 
 	mapfile -t als < <(alias | grep -E "/svdir %")
 	for entry in "${als[@]}"; do
@@ -216,7 +217,7 @@ function check_aliases()
 		fi
 	done
 
-	if [[ ${#aliases[@]} -eq 8 ]]; then return 0; fi
+	if [[ ${#aliases[@]} -eq 8 ]]; then return; fi
 
 	put "W" "Some or all svdir aliases are missing:\n"
 	for key in sc sv ls rm sb lb ld db; do
@@ -250,7 +251,7 @@ function check_aliases()
 		fi
 	done
 	printf "\n    %sThe new aliases are now active.%s\n\n" "${_g}" "${_rst}"
-	return 1
+	return
 }
 
 
@@ -478,7 +479,7 @@ function put()
 		w)	printf "    %s" "${_y} " ;;			# Warning
 		e)	printf "    %s" "${_r} " ;;			# Error
 		h)	printf "\n%s" "${_c}" ;;			# Bold cyan
-		p)	printf "${msg}\n"; return;			# Plain
+		p)	printf "%s\n" "${msg}"; return;;	# Plain
 	esac
 
 	printf "%b%s" "${msg}" "${_rst}"
@@ -556,5 +557,5 @@ function main()
 	esac
 }
 
-check_aliases || return
+check_aliases
 main "$@"

@@ -236,7 +236,7 @@ sub get_network
 			my $type = $info[1] eq 'inet' ? 'IPv4:' : 'IPv6:';
 			my ($ip_addr, $net) = split '/', $info[2];
 			my $work = $info[$#info] ;
-			if ($work =~ /lo|noprefixroute|dynamic|kernel/) {
+			if ($work =~ /^(lo|noprefixroute|dynamic|kernel)$/) {
 				$work = '';
 			}
 			$work = sprintf "%-5s %-12s /%-3s %s", $type, $ip_addr, $net, $work;
