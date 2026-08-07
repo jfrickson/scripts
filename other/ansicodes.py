@@ -15,7 +15,7 @@ else:
 
     FIONREAD = getattr(termios, "FIONREAD", None)
 
-sys.path.insert(0, os.path.expanduser("~/.local/lib/python3.13/site-packages"))
+sys.path.insert(0, os.path.expanduser("~/.local/lib/python3/site-packages"))
 import ansi as a
 
 version = "1.1.0"

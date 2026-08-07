@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use lib glob("~/.local/lib/perl");
+use lib glob("~/.local/lib/perl5");
 use Ansi qw(:DEFAULT);
 use List::Util qw(first);
 use Term::ReadKey;
