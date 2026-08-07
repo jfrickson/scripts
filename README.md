@@ -9,12 +9,12 @@ by some people other than myself.
 
 - [Modules](#modules)
 - [Scripts](#scripts)
-  - [ansi.sh](#ansish)
   - [ascii.py](#asciipy)
   - [dtach-ctl.sh](#dtach-ctlsh)
+  - [readkeyraw test programs](#readkeyraw-test-programs)
   - [svdir](#svdir)
-  - [sysinfo.pl](#sysinfpl)
-  - [ssh-hosts.pl](#ssh-hostspl)
+  - [sysinfo.pl](#sysinfopl)
+  - [ssh-hosts](#ssh-hosts)
   - [Date & Time Utilities](#date--time-utilities)
 
 ---------------------------------------------------------------------------
@@ -32,38 +32,48 @@ Put these in `~/.local/lib`
         source Ansi
         ```
 
-* [`.local/lib/perl/Ansi.pm`](.local/lib/perl/Ansi.pm) - a collections of ANSI codes for perl scripts
+* [`.local/lib/perl5/Ansi.pm`](.local/lib/perl5/Ansi.pm) - a collections of ANSI codes for perl scripts
     - Include in your scripts by using these lines:
         ```perl
-        use lib glob("~/.local/lib/perl");
+    use lib glob("~/.local/lib/perl5");
         use Ansi qw(:DEFAULT);
         ```
 
-* [`.local/lib/python3.13/site-packages/ansi.py`](.local/lib/python/ansi.py) - a collections of ANSI codes for python scripts
+* [`.local/lib/python3/site-packages/ansi.py`](.local/lib/python3/site-packages/ansi.py) - a collections of ANSI codes for python scripts
     - Include in your scripts by using these lines:
         ```python
         import sys
         import os
-        sys.path.append(os.path.expanduser("~/.local/lib/python"))
+    sys.path.append(os.path.expanduser("~/.local/lib/python3/site-packages"))
         from ansi import *
         ```
 
+* [`.local/lib/bash/ReadKeyRaw`](.local/lib/bash/ReadKeyRaw) - keyboard input helper for bash scripts
+  - Include in your scripts by using these lines:
+    ```bash
+    PATH="${HOME}/.local/lib/bash:${PATH}"
+    . ReadKeyRaw
+    ```
+
+* [`.local/lib/perl5/readkeyraw.pm`](.local/lib/perl5/readkeyraw.pm) - keyboard input helper for perl scripts
+  - Include in your scripts by using these lines:
+    ```perl
+    use lib glob("~/.local/lib/perl5");
+    use readkeyraw qw(read_key_raw set_debug);
+    my $key = read_key_raw(timeout => 1);
+    ```
+
+* [`.local/lib/python3/site-packages/readkeyraw.py`](.local/lib/python3/site-packages/readkeyraw.py) - keyboard input helper for python scripts
+  - Include in your scripts by using these lines:
+    ```python
+    import os
+    import sys
+    sys.path.append(os.path.expanduser("~/.local/lib/python3/site-packages"))
+    from readkeyraw import ReadKeyRaw
+    ```
+
 
 ## Scripts ##
-
----------------------------------------------------------------------------
-### [ansi.sh](other/ansi.sh) ###
-A bash script that shows selected ANSI escape codes on the screen for easy
-reference.
-
-| **Escape Page**                | **Attributes Page**            |
-|--------------------------------|--------------------------------|
-| ![](images/ansi_e.png)         | ![](images/ansi_a.png)         |
-| **256 Foreground Colors Page** | **256 Background Colors Page** |
-| ![](images/ansi_f.png)         | ![](images/ansi_b.png)         |
-| **Line-draw Page**             |                                |
-| ![](images/ansi_l.png)         |                                |
-
 
 ---------------------------------------------------------------------------
 ### [ascii.py](other/ascii.py) ###
@@ -80,6 +90,23 @@ most popular sets: ISO-8859-1, CP437, CP1252, and MacRoman.
 
 - **ASCII Table**  
   ![](images/ascii.png)
+
+
+---------------------------------------------------------------------------
+### [ansicodes.py](other/ansicodes.py) ###
+A python/tkinter script that shows ANSI codes for reference.
+
+The top half shows
+the standard 7-bit ANSI characters. Pressing a key on the keyboard will
+highlight that character. Pressing the left or right cursor keys will change
+the numbers between decimal, octal, and hex.
+
+The bottom half shows extended ANSI characters. There are quite a few sets of
+extended ANSI, and the dropdown gives you the option of showing four of the
+most popular sets: ISO-8859-1, CP437, CP1252, and MacRoman.
+
+- **ANSI Table**  
+  ![](images/ansicodes.png)
 
 
 ---------------------------------------------------------------------------
@@ -122,6 +149,17 @@ supply tab-completion for the `s, `sk`, and `sw` commands.
 
 
 ---------------------------------------------------------------------------
+### [readkeyraw test programs](other/readkeyraw-test.sh) ###
+Interactive test programs for the Bash, Perl, and Python readkeyraw modules.
+Each one prints the translated token for each keypress and supports timeout and
+debug options.
+
+* Bash: [`other/readkeyraw-test.sh`](other/readkeyraw-test.sh)
+* Perl: [`other/readkeyraw-test.pl`](other/readkeyraw-test.pl)
+* Python: [`other/readkeyraw-test.py`](other/readkeyraw-test.py)
+
+
+---------------------------------------------------------------------------
 ### [svdir](svdir/svdir) ###
 I often need to change to multiple directories, sometimes eight or more. I could
 (and did) use `pushd /some/very/long/path/name` and `pushd +1`, etc. to switch,
@@ -152,7 +190,7 @@ to see about whatever system I'm on. This is the result.
 
 
 ---------------------------------------------------------------------------
-### [ssh-hosts.pl](other/ssh-hosts.pl) ###
+### [ssh-hosts](other/ssh-hosts.sh) ###
 This is a little convenience script to list the hosts in my `~/.ssh/config`
 file. The hosts can be in groups. A group starts with lines like this:  
 ```
