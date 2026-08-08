@@ -4,86 +4,90 @@
 # =====================
 #  Reset, Clear, Home
 # =====================
-printf -v _rst '\e[0m'			# Reset to normal attributes
-printf -v _cls '\e[H\e[J'       # Home & clear to end of screen
-printf -v _hom '\e[0;0H'		# Cursor to Home R0C0
-printf -v _el '\e[2K'			# Erase Line
-printf -v _scp '\e[s'			# Save cursor pos
-printf -v _rcp '\e[u'			# Restore cursor pos
+_rst=$'\e[0m'			# Reset to normal attributes
+_cls=$'\e[H\e[J'		# Home & clear to end of screen
+_hom=$'\e[0;0H'			# Cursor to Home R0C0
+_el=$'\e[2K'			# Erase Line
+_scp=$'\e[s'			# Save cursor pos
+_rcp=$'\e[u'			# Restore cursor pos
+_coff=$'\e[?25l'		# Hide cursor
+_con=$'\e[?25h'			# Show cursor
+_alton=$'\e[?1049h'		# Alternate screen buffer
+_altoff=$'\e[?1049l'	# Exit alternate screen buffer
 
 # =====================
 #      Attributes
 # =====================
-printf -v _d '\e[1m'			# Bold
-printf -v _i '\e[2m'			# Dim
-printf -v _l '\e[3m'			# Italic
-printf -v _u '\e[4m'			# Underscore
-printf -v _f '\e[5m'			# Blink (flash)
-printf -v _v '\e[7m'			# Reverse
-printf -v _s '\e[9m'			# Strike out
+_d=$'\e[1m'		# Bold
+_i=$'\e[2m'		# Dim
+_l=$'\e[3m'		# Italic
+_u=$'\e[4m'		# Underscore
+_f=$'\e[5m'		# Blink (flash)
+_v=$'\e[7m'		# Reverse
+_s=$'\e[9m'		# Strike out
 
 # =====================
 #   Foreground Colors
 # =====================
-printf -v _k '\e[30m'			# Black
-printf -v _r '\e[31m'			# Red
-printf -v _g '\e[32m'			# Green
-printf -v _y '\e[33m'			# Yellow
-printf -v _b '\e[34m'			# Blue
-printf -v _m '\e[35m'			# Magenta
-printf -v _c '\e[36m'			# Cyan
-printf -v _w '\e[37m'			# White
+_k=$'\e[30m'	# Black
+_r=$'\e[31m'	# Red
+_g=$'\e[32m'	# Green
+_y=$'\e[33m'	# Yellow
+_b=$'\e[34m'	# Blue
+_m=$'\e[35m'	# Magenta
+_c=$'\e[36m'	# Cyan
+_w=$'\e[37m'	# White
 
-printf -v _dk '\e[1;30m'		# Bold Black
-printf -v _dr '\e[1;31m'		# Bold Red
-printf -v _dg '\e[1;32m'		# Bold Green
-printf -v _dy '\e[1;33m'		# Bold Yellow
-printf -v _db '\e[1;34m'		# Bold Blue
-printf -v _dm '\e[1;35m'		# Bold Magenta
-printf -v _dc '\e[1;36m'		# Bold Cyan
-printf -v _dw '\e[1;37m'		# Bold White
+_dk=$'\e[1;30m'		# Bold Black
+_dr=$'\e[1;31m'		# Bold Red
+_dg=$'\e[1;32m'		# Bold Green
+_dy=$'\e[1;33m'		# Bold Yellow
+_db=$'\e[1;34m'		# Bold Blue
+_dm=$'\e[1;35m'		# Bold Magenta
+_dc=$'\e[1;36m'		# Bold Cyan
+_dw=$'\e[1;37m'		# Bold White
 
 # =====================
 #   Background Colors
 # =====================
-printf -v _K '\e[40m'			# Black
-printf -v _R '\e[41m'			# Red
-printf -v _G '\e[42m'			# Green
-printf -v _Y '\e[43m'			# Yellow
-printf -v _B '\e[44m'			# Blue
-printf -v _M '\e[45m'			# Magenta
-printf -v _C '\e[46m'			# Cyan
-printf -v _W '\e[47m'			# White
+_K=$'\e[40m'	# Black
+_R=$'\e[41m'	# Red
+_G=$'\e[42m'	# Green
+_Y=$'\e[43m'	# Yellow
+_B=$'\e[44m'	# Blue
+_M=$'\e[45m'	# Magenta
+_C=$'\e[46m'	# Cyan
+_W=$'\e[47m'	# White
 
-printf -v _dK '\e[1;40m'		# Bold Black
-printf -v _dR '\e[1;41m'		# Bold Red
-printf -v _dG '\e[1;42m'		# Bold Green
-printf -v _dY '\e[1;43m'		# Bold Yellow
-printf -v _dB '\e[1;44m'		# Bold Blue
-printf -v _dM '\e[1;45m'		# Bold Magenta
-printf -v _dC '\e[1;46m'		# Bold Cyan
-printf -v _dW '\e[1;47m'		# Bold White
+_dK=$'\e[1;40m'		# Bold Black
+_dR=$'\e[1;41m'		# Bold Red
+_dG=$'\e[1;42m'		# Bold Green
+_dY=$'\e[1;43m'		# Bold Yellow
+_dB=$'\e[1;44m'		# Bold Blue
+_dM=$'\e[1;45m'		# Bold Magenta
+_dC=$'\e[1;46m'		# Bold Cyan
+_dW=$'\e[1;47m'		# Bold White
 
 # =====================
 #  Common Combinations
 # =====================
 
-printf -v _vdkW '\e[1;7;37;40m'		# Reverse Bold Black on White
-printf -v _vdrW '\e[1;7;37;41m'		# Reverse Bold Red on White
-printf -v _vdbW '\e[1;7;37;44m'		# Reverse Bold Blue on White
-printf -v _vdmW '\e[1;7;37;48m'		# Reverse Bold Magenta on White
-printf -v _dwR '\e[1;41;37m'		# Bold White on Red
-printf -v _dwB '\e[1;44;37m'		# Bold White on Blue
-printf -v _dur '\e[1;4;31m'			# Bold Underline Red
-printf -v _dug '\e[1;4;32m'			# Bold Underline Green
-printf -v _duy '\e[1;4;33m'			# Bold Underline Yellow
-printf -v _dub '\e[1;4;34m'			# Bold Underline Blue
-printf -v _dum '\e[1;4;35m'			# Bold Underline Magenta
-printf -v _duc '\e[1;4;36m'			# Bold Underline Cyan
-printf -v _duw '\e[1;4;37m'			# Bold Underline White
+_vdkW=$'\e[1;7;37;40m'	# Reverse Bold Black on White
+_vdrW=$'\e[1;7;37;41m'	# Reverse Bold Red on White
+_vdbW=$'\e[1;7;37;44m'	# Reverse Bold Blue on White
+_vdmW=$'\e[1;7;37;45m'	# Reverse Bold Magenta on White
+_dwR=$'\e[1;41;37m'		# Bold White on Red
+_dwB=$'\e[1;44;37m'		# Bold White on Blue
+_dur=$'\e[1;4;31m'		# Bold Underline Red
+_dug=$'\e[1;4;32m'		# Bold Underline Green
+_duy=$'\e[1;4;33m'		# Bold Underline Yellow
+_dub=$'\e[1;4;34m'		# Bold Underline Blue
+_dum=$'\e[1;4;35m'		# Bold Underline Magenta
+_duc=$'\e[1;4;36m'		# Bold Underline Cyan
+_duw=$'\e[1;4;37m'		# Bold Underline White
 
-_err=${_dwR}						# Errors
-printf -v _wrn '\e[30;43m'			# Warnings
+_err=${_dwR}			# Errors
+_wrn=$'\e[30;43m'		# Warnings
 
 # =====================
 #   256 color Colors
@@ -101,3 +105,69 @@ if [[ "$1" == "256" ]]; then
 		printf -v _bg256dv[${n}] "\e[1;7;48;5;%dm" "${n}"
 	done
 fi
+
+# =====================
+#       Functions
+# =====================
+function _pos()
+{
+	local row=$1
+	local col=$2
+	printf "\e[%d;%dH" "$row" "$col"
+}
+
+function _cup()
+{
+	local n=${1:-1}
+	printf "\e[%dA" "$n"
+}
+
+function _cdown()
+{
+	local n=${1:-1}
+	printf "\e[%dB" "$n"
+}
+
+function _cright()
+{
+	local n=${1:-1}
+	printf "\e[%dC" "$n"
+}
+
+function _cleft()
+{
+	local n=${1:-1}
+	printf "\e[%dD" "$n"
+}
+
+function _fg_rgb()
+{
+	local r=$1
+	local g=$2
+	local b=$3
+	printf "\e[38;2;%d;%d;%dm" "$r" "$g" "$b"
+}
+
+function _bg_rgb()
+{
+	local r=$1
+	local g=$2
+	local b=$3
+	printf "\e[48;2;%d;%d;%dm" "$r" "$g" "$b"
+}
+
+function _fg_rgbd()
+{
+	local r=$1
+	local g=$2
+	local b=$3
+	printf "\e[1;38;2;%d;%d;%dm" "$r" "$g" "$b"
+}
+
+function _bg_rgbd()
+{
+	local r=$1
+	local g=$2
+	local b=$3
+	printf "\e[1;48;2;%d;%d;%dm" "$r" "$g" "$b"
+}

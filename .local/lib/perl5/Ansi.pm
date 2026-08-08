@@ -4,14 +4,15 @@ package Ansi;
 use Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-    $_rst  $_cls  $_hom  $_el   $_scp  $_rcp  $_d    $_u    $_f    $_v
-    $_k    $_r    $_g    $_y    $_b    $_m    $_c    $_w    $_dk   $_dr
-    $_dg   $_dy   $_db   $_dm   $_dc   $_dw   $_K    $_R    $_G    $_Y
-    $_B    $_M    $_C    $_W    $_dK   $_dR   $_dG   $_dY   $_dB   $_dM
-    $_dC   $_dW   $_vdkW $_vdrW $_vdbW $_vdmW $_dwR  $_dwB  $_dwC  $_dur
-	$_dug  $_duy  $_dub  $_dum  $_duc  $_duw  $_err  $_wrn
+	$_rst  $_cls  $_hom  $_el   $_scp  $_rcp  $_coff $_con  $_alton $_altoff
+	$_d    $_i    $_l    $_u    $_f    $_v    $_k    $_r    $_g    $_y
+	$_b    $_m    $_c    $_w    $_dk   $_dr   $_dg   $_dy   $_db   $_dm
+	$_dc   $_dw   $_K    $_R    $_G    $_Y    $_B    $_M    $_C    $_W
+	$_dK   $_dR   $_dG   $_dY   $_dB   $_dM   $_dC   $_dW   $_vdkW $_vdrW
+	$_vdbW $_vdmW $_vdwC $_dwR  $_dwB  $_dwC  $_dur  $_dug  $_duy  $_dub
+	$_dum  $_duc  $_duw  $_err  $_wrn
 	@_fg256 @_bg256 @_fg256d @_bg256d @_fg256v @_bg256v @_fg256dv @_bg256dv
-	_a
+	_a _pos _up _down _right _left _fg_rgb _bg_rgb _fg_rgbd _bg_rgbd
 );
 
 # =====================
@@ -23,11 +24,17 @@ our $_hom = "\e[0;0H";			# Cursor to Home R0C0
 our $_el = "\e[2K";				# Erase Line
 our $_scp = "\e[s";				# Save cursor pos
 our $_rcp = "\e[u";				# Restore cursor pos
+our $_coff = "\e[?25l";			# Hide cursor
+our $_con = "\e[?25h";			# Show cursor
+our $_alton = "\e[?1049h";		# Alternate screen buffer
+our $_altoff = "\e[?1049l";		# Exit alternate screen buffer
 
 # =====================
 #      Attributes
 # =====================
 our $_d = "\e[1m";				# Bold
+our $_i = "\e[2m";				# Dim
+our $_l = "\e[3m";				# Italic
 our $_u = "\e[4m";				# Underscore
 our $_f = "\e[5m";				# Blink (flash)
 our $_v = "\e[7m";				# Reverse
@@ -119,6 +126,64 @@ sub _a()
     my ($var) = @_;
 	$var = '$' . $var unless ref $$var;
 	print "$$var";
+}
+
+sub _pos()
+{
+	my ($row, $col) = @_;
+	return "\e[${row};${col}H";
+}
+
+sub _up()
+{
+	my ($n) = @_;
+	$n = 1 unless defined $n;
+	return "\e[${n}A";
+}
+
+sub _down()
+{
+	my ($n) = @_;
+	$n = 1 unless defined $n;
+	return "\e[${n}B";
+}
+
+sub _right()
+{
+	my ($n) = @_;
+	$n = 1 unless defined $n;
+	return "\e[${n}C";
+}
+
+sub _left()
+{
+	my ($n) = @_;
+	$n = 1 unless defined $n;
+	return "\e[${n}D";
+}
+
+sub _fg_rgb()
+{
+	my ($r, $g, $b) = @_;
+	return "\e[38;2;${r};${g};${b}m";
+}
+
+sub _bg_rgb()
+{
+	my ($r, $g, $b) = @_;
+	return "\e[48;2;${r};${g};${b}m";
+}
+
+sub _fg_rgbd()
+{
+	my ($r, $g, $b) = @_;
+	return "\e[1;38;2;${r};${g};${b}m";
+}
+
+sub _bg_rgbd()
+{
+	my ($r, $g, $b) = @_;
+	return "\e[1;48;2;${r};${g};${b}m";
 }
 
 1;
