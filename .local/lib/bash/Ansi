@@ -25,6 +25,14 @@ _u=$'\e[4m'		# Underscore
 _f=$'\e[5m'		# Blink (flash)
 _v=$'\e[7m'		# Reverse
 _s=$'\e[9m'		# Strike out
+_nd=$'\e[22m'	# Normal intensity (clears bold + dim)
+_nl=$'\e[23m'	# Not italic
+_nu=$'\e[24m'	# Not underlined
+_nf=$'\e[25m'	# Not blinking
+_nv=$'\e[27m'	# Not reversed
+_ns=$'\e[29m'	# Not strike out
+_nfg=$'\e[39m'	# Default foreground color
+_nbg=$'\e[49m'	# Default background color
 
 # =====================
 #   Foreground Colors

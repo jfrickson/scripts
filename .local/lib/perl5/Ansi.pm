@@ -6,6 +6,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(
 	$_rst  $_cls  $_hom  $_el   $_scp  $_rcp  $_coff $_con  $_alton $_altoff
 	$_d    $_i    $_l    $_u    $_f    $_v    $_k    $_r    $_g    $_y
+	$_nd   $_nl   $_nu   $_nf   $_nv   $_ns   $_nfg  $_nbg
 	$_b    $_m    $_c    $_w    $_dk   $_dr   $_dg   $_dy   $_db   $_dm
 	$_dc   $_dw   $_K    $_R    $_G    $_Y    $_B    $_M    $_C    $_W
 	$_dK   $_dR   $_dG   $_dY   $_dB   $_dM   $_dC   $_dW   $_vdkW $_vdrW
@@ -38,6 +39,14 @@ our $_l = "\e[3m";				# Italic
 our $_u = "\e[4m";				# Underscore
 our $_f = "\e[5m";				# Blink (flash)
 our $_v = "\e[7m";				# Reverse
+our $_nd = "\e[22m";			# Normal intensity (clears bold + dim)
+our $_nl = "\e[23m";			# Not italic
+our $_nu = "\e[24m";			# Not underlined
+our $_nf = "\e[25m";			# Not blinking
+our $_nv = "\e[27m";			# Not reversed
+our $_ns = "\e[29m";			# Not strike-through
+our $_nfg = "\e[39m";			# Default foreground color
+our $_nbg = "\e[49m";			# Default background color
 
 # =====================
 #   Foreground Colors
