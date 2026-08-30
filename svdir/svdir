@@ -492,7 +492,7 @@ function put()
 function get_saved()
 {
 	readarray -t list < <(alias | grep -E "^alias \.+.+='cd " | \
-		grep -E -v " ..=| ...=" | sed -e 's/^alias //' -e "s/'//g")
+		grep -E -v " \.\.=| \.\.\.=" | sed -e 's/^alias //' -e "s/'//g")
     numdirs=${#list[*]}
 }
 
