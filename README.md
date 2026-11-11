@@ -1,11 +1,11 @@
-# John's Scripts #
+# John's Scripts
 
-## Introduction ##
+## Introduction
 
 This is a collections of some of my scripts that I thought might be usable
 by some people other than myself.
 
-## Table of Contents ##
+## Table of Contents
 
 - [Modules](#modules)
 - [Scripts](#scripts)
@@ -19,7 +19,7 @@ by some people other than myself.
 
 ---------------------------------------------------------------------------
 
-## Modules ##
+## Modules
 
 A lot of my scripts add color to make things stand out more, or to highlight
 warnings and errors. For that reason, I have centralized ANSI escape sequences.
@@ -73,10 +73,10 @@ Put these in `~/.local/lib`
     ```
 
 
-## Scripts ##
+## Scripts
 
 ---------------------------------------------------------------------------
-### [ascii.py](other/ascii.py) ###
+### [ascii.py](other/ascii.py)
 A python/tkinter script that shows ASCII codes for reference.
 
 The top half shows
@@ -93,7 +93,7 @@ most popular sets: ISO-8859-1, CP437, CP1252, and MacRoman.
 
 
 ---------------------------------------------------------------------------
-### [ansicodes.py](other/ansicodes.py) ###
+### [ansicodes.py](other/ansicodes.py)
 A python/tkinter script that shows ANSI codes for reference.
 
 The top half shows
@@ -110,7 +110,7 @@ most popular sets: ISO-8859-1, CP437, CP1252, and MacRoman.
 
 
 ---------------------------------------------------------------------------
-### [dtach-ctl.sh](dtach-ctl/dtach-ctl.sh) ###
+### [dtach-ctl.sh](dtach-ctl/dtach-ctl.sh)
 I needed a program that would give me a persistent remote terminal on a server
 at work, because the connection would drop and the worst possible times. I also
 wanted something that would let me have multiple sessions active in the same
@@ -126,7 +126,7 @@ did the job without any problems or "features", and only watched for one
 scancode - `Ctrl+\` - which is redifinable. The only thing missing was simple
 multiplexing. I wrote the `dtach-ctl.sh` script to take care of that.
 
-#### How to ####
+#### How to
 * Copy `dtach-ctl.sh` to your `~/bin` directory.
 * Copy `s`, `sc`, `sk`, `sl`, and `sw` to your `~/bin` directory using `cp -d` to keep it as a symlink.
 * Download [the dtach source](https://github.com/crigler/dtach/archive/refs/heads/master.tar.gz) tarball (or use the `.zip` extension if you prefer zip.)
@@ -149,7 +149,7 @@ supply tab-completion for the `s, `sk`, and `sw` commands.
 
 
 ---------------------------------------------------------------------------
-### [readkeyraw test programs](other/readkeyraw-test.sh) ###
+### [readkeyraw test programs](other/readkeyraw-test.sh)
 Interactive test programs for the Bash, Perl, and Python readkeyraw modules.
 Each one prints the translated token for each keypress and supports timeout and
 debug options.
@@ -160,7 +160,7 @@ debug options.
 
 
 ---------------------------------------------------------------------------
-### [svdir](svdir/svdir) ###
+### [svdir](svdir/svdir)
 I often need to change to multiple directories, sometimes eight or more. I could
 (and did) use `pushd /some/very/long/path/name` and `pushd +1`, etc. to switch,
 or curser up or search history, or type or paste in the long `cd` commands. No
@@ -177,7 +177,7 @@ are back, ready to use.
 
 
 ---------------------------------------------------------------------------
-### [sysinfo.pl](other/sysinfo.pl) ###
+### [sysinfo.pl](other/sysinfo.pl)
 I often need (or want) to see information about a system I'm working on. How
 much memory does it have? How big are the drives? What are the details about
 the CPU? What about the network, security, virtualization?
@@ -190,7 +190,7 @@ to see about whatever system I'm on. This is the result.
 
 
 ---------------------------------------------------------------------------
-### [ssh-hosts](other/ssh-hosts.sh) ###
+### [ssh-hosts](other/ssh-hosts.sh)
 This is a little convenience script to list the hosts in my `~/.ssh/config`
 file. The hosts can be in groups. A group starts with lines like this:  
 ```
@@ -214,7 +214,7 @@ of dashes doesn't matter -- as long as there's at least one dash.
 
 
 ---------------------------------------------------------------------------
-### [Date & Time Utilities](date-time) ###
+### [Date & Time Utilities](date-time)
 Some things I wrote that sometimes come in handy.
 
 * [`date2ts.sh`](date-time/date2ts.sh) - Alone, gives the current timestamp. Or include a date string, and it will convert that to a timestamp.

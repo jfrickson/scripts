@@ -396,6 +396,7 @@ function attach_with_tracking
 	bash -c "echo \$\$ > \"${pid_file}\"; exec dtach -a \"${sock}\" -z"
 
 	kill "${watcher_pid}" 2>/dev/null || true
+	wait "${watcher_pid}" 2>/dev/null || true
 	rm -f "${pid_file}" "${req_file}"
 }
 
