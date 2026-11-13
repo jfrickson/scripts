@@ -2,6 +2,7 @@
 
 # Configuration
 DTACH_DIR="/home/ <YOUR_USERNAME> /.dtach"
+sess_id="$1"
 
 #----------------------------------------------------------------------
 # Things to send to new sessions based on their ID (e.g. to set up
@@ -19,7 +20,7 @@ declare -A feed_keys=(
 	# Matches any "dummy" session (e.g. "dummy", "my_dummy123", "dummy_session")
 	[dummy]='echo "Welcome to the dummy session!"\n'
 	# Matches any session that starts with "abc" (e.g. "abc", "abc123")
-	[^abc]='source abc-profile\n'
+	[^abc]='source abc-profile $sess_id\n'
 )
 
 # @@ ================== Modify items above this line ===================
